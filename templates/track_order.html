@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}შეკვეთის შემოწმება — სახლური გემო{% endblock %}
+{% block content %}
+
+<div class="bg-white border rounded-4 p-4 p-md-5 mx-auto" style="max-width: 560px;">
+    <h3 class="fw-bold mb-2">შეკვეთის სტატუსის შემოწმება</h3>
+    <p class="text-muted small mb-4">შეიყვანეთ შეკვეთის ნომერი და შეკვეთისას მითითებული ტელეფონი</p>
+
+    <form method="POST" class="row g-3">
+        <div class="col-sm-5">
+            <label class="form-label small fw-semibold">შეკვეთის #</label>
+            <input type="text" name="order_id" class="form-control rounded-3" placeholder="მაგ: 12" required>
+        </div>
+        <div class="col-sm-7">
+            <label class="form-label small fw-semibold">ტელეფონის ნომერი</label>
+            <input type="text" name="phone" class="form-control rounded-3" placeholder="5XX XX XX XX" required>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-brand w-100 py-2">სტატუსის ნახვა</button>
+        </div>
+    </form>
+
+    {% if order %}
+    <hr class="my-4">
+    <div class="p-3 rounded-3" style="background-color: var(--bg-stone); border: 1px solid var(--border);">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>შეკვეთა #{{ order.id }}</strong>
+            {% if order.status == 'pending' %}
+                <span class="badge bg-warning text-dark">მიღებულია — მუშავდება</span>
+            {% elif order.status == 'preparing' %}
+                <span class="badge bg-info text-dark">მზადდება / იფუთება</span>
+            {% elif order.status == 'delivered' %}
+                <span class="badge bg-success">მიტანილია</span>
+            {% else %}
+                <span class="badge bg-secondary">გაუქმებული</span>
+            {% endif %}
+        </div>
+        <div class="small text-muted mb-2">მისამართი: {{ order.address }}</div>
+        <pre class="small mb-2" style="font-family: inherit;">{{ order.items_summary }}</pre>
+        <div class="fw-bold">ჯამი: {{ "%.2f"|format(order.total_price) }} ₾</div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

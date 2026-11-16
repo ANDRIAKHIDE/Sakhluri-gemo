@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}საბითუმო თანამშრომლობა — სახლური გემო{% endblock %}
+{% block content %}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="bg-white border rounded-4 p-4">
+            <span class="hero-eyebrow mb-2">B2B პარტნიორობა</span>
+            <h2 class="h3 fw-bold mb-2">საბითუმო მიწოდება მაღაზიებისა და კაფეებისთვის</h2>
+            <p class="text-muted small mb-4">
+                ვამარაგებთ სუპერმარკეტებს, უბნის მაღაზიებს, კაფეებსა და საოფისე სამზარეულოებს სტაბილური ხარისხითა და სპეციალური ფასებით.
+            </p>
+
+            <div class="table-responsive">
+                <table class="table align-middle small">
+                    <thead>
+                        <tr>
+                            <th>პროდუქტი</th>
+                            <th>ერთეული</th>
+                            <th>საცალო</th>
+                            <th class="text-success">საბითუმო ფასი</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in products %}
+                        <tr>
+                            <td class="fw-semibold">{{ p.title }}</td>
+                            <td>{{ p.unit }}</td>
+                            <td class="text-muted text-decoration-line-through">{{ "%.2f"|format(p.price) }} ₾</td>
+                            <td class="fw-bold text-success">{{ "%.2f"|format(p.wholesale_price) }} ₾</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="bg-white border rounded-4 p-4">
+            <h4 class="fw-bold mb-2">მოითხოვეთ პარტნიორობა</h4>
+            <p class="text-muted small mb-3">დაგვიტოვეთ საკონტაქტო ინფორმაცია და მენეჯერი დაგიკავშირდებათ დეტალების შესათანხმებლად.</p>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">ობიექტის / კომპანიის დასახელება *</label>
+                    <input type="text" name="company_name" class="form-control rounded-3" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">საკონტაქტო პირი</label>
+                    <input type="text" name="contact_person" class="form-control rounded-3">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">ტელეფონის ნომერი *</label>
+                    <input type="text" name="phone" class="form-control rounded-3" placeholder="5XX XX XX XX" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold">სასურველი ასორტიმენტი და სავარაუდო მოცულობა</label>
+                    <textarea name="details" rows="3" class="form-control rounded-3" placeholder="მაგ: კვირაში 20 კგ პელმენი და 200 ცალი ხინკალი..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-brand w-100 py-2">განაცხადის გაგზავნა</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

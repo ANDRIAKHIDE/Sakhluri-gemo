@@ -1,36 +1,76 @@
 {% extends "base.html" %}
 {% block content %}
-<h3 class="fw-bold mb-4">👤 გამარჯობა, {{ current_user.username }}!</h3>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <h3 class="fw-bold mb-0">გამარჯობა, {{ current_user.username }}</h3>
+    <div class="bg-white border rounded-4 px-4 py-2 d-flex align-items-center gap-3">
+        <i class="bi bi-wallet2 text-success fs-4"></i>
+        <div>
+            <div class="small text-muted">დაგროვილი ბონუსი</div>
+            <div class="fw-bold text-success fs-5">{{ "%.2f"|format(current_user.bonus_balance or 0) }} ₾</div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white border rounded-4 p-4 mb-4">
+    <div class="row align-items-center gy-3">
+        <div class="col-lg-8">
+            <h5 class="fw-bold mb-1"><i class="bi bi-gift text-danger me-2"></i>მოიწვიე მეგობარი — მიიღე 5 ₾ ბონუსი</h5>
+            <p class="small text-muted mb-0">
+                გაუზიარე შენი პერსონალური კოდი მეგობარს. პირველ შეკვეთაზე (20 ₾-დან) მას დააკლდება <strong>5 ₾</strong>, ხოლო შეკვეთის მიტანისთანავე შენ დაგერიცხება <strong>5 ₾</strong> ბალანსზე.
+                (მოწვეული მეგობრები: <strong>{{ invited_count }}</strong>)
+            </p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <div class="d-inline-flex align-items-center gap-2 border rounded-3 px-3 py-2 bg-light">
+                <code class="fs-5 fw-bold text-dark" id="myRefCode">{{ current_user.referral_code }}</code>
+                <button type="button" class="btn btn-sm btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('myRefCode').innerText); this.innerText='დაკოპირდა';">
+                    კოპირება
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
+        <div class="bg-white border rounded-4 p-4">
             <h5 class="fw-bold mb-3">ჩემი შეკვეთები ({{ orders|length }})</h5>
             {% for order in orders %}
-            <div class="border rounded-4 p-3 mb-3">
-                <div class="d-flex justify-content-between">
+            <div class="border rounded-3 p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
                     <strong>შეკვეთა #{{ order.id }} — {{ "%.2f"|format(order.total_price) }} ₾</strong>
-                    <span class="badge bg-info text-dark">{{ order.status }}</span>
+                    <span class="badge bg-dark">{{ order.status }}</span>
                 </div>
-                <small class="text-muted">{{ order.created_at.strftime('%d.%m.%Y %H:%M') }} | {{ order.address }}</small>
-                <pre class="small bg-light p-2 rounded mt-2 mb-0" style="font-family: inherit;">{{ order.items_summary }}</pre>
+                <div class="small text-muted mb-2">
+                    {{ order.created_at.strftime('%d.%m.%Y %H:%M') }} | {{ order.address }}
+                    {% if order.delivery_slot %}<br><i class="bi bi-clock me-1"></i>დრო: {{ order.delivery_slot }}{% endif %}
+                </div>
+                <pre class="small p-2 rounded mb-2" style="font-family: inherit; background-color: var(--bg-stone);">{{ order.items_summary }}</pre>
+
+                {% if order.items_json %}
+                <form method="POST" action="{{ url_for('main.reorder', order_id=order.id) }}" class="text-end">
+                    <button type="submit" class="btn btn-sm btn-outline-brand">
+                        <i class="bi bi-arrow-repeat me-1"></i>შეკვეთის გამეორება
+                    </button>
+                </form>
+                {% endif %}
             </div>
             {% else %}
-            <p class="text-muted">შეკვეთები ჯერ არ გაქვთ.</p>
+            <p class="text-muted small mb-0">შეკვეთები ჯერ არ გაქვთ.</p>
             {% endfor %}
         </div>
     </div>
 
     <div class="col-lg-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h5 class="fw-bold mb-3">❤️ რჩეული პროდუქტები</h5>
+        <div class="bg-white border rounded-4 p-4">
+            <h5 class="fw-bold mb-3">შენახული პროდუქტები</h5>
             {% for p in liked_products %}
             <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="text-decoration-none text-dark fw-semibold">{{ p.title }}</a>
-                <span class="text-danger fw-bold">{{ "%.2f"|format(p.price) }} ₾</span>
+                <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="text-decoration-none text-dark fw-semibold small">{{ p.title }}</a>
+                <span class="fw-bold small">{{ "%.2f"|format(p.price) }} ₾</span>
             </div>
             {% else %}
-            <p class="text-muted small">რჩეული პროდუქტები ცარიელია.</p>
+            <p class="text-muted small mb-0">რჩეული პროდუქტების სია ცარიელია.</p>
             {% endfor %}
         </div>
     </div>

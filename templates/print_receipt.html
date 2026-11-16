@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>ქვითარი #{{ order.id }} — სახლური გემო</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #111; max-width: 420px; margin: 20px auto; padding: 16px; border: 1px dashed #333; }
+        h2 { margin: 0 0 4px 0; font-size: 20px; }
+        .meta { font-size: 13px; color: #444; margin-bottom: 12px; }
+        .block { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; font-size: 14px; }
+        pre { font-family: inherit; white-space: pre-wrap; margin: 6px 0; }
+        .total { font-size: 18px; font-weight: bold; margin-top: 12px; }
+        @media print {
+            .no-print { display: none; }
+            body { border: none; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 14px;">
+        <button onclick="window.print()" style="padding: 8px 16px; font-weight: bold; cursor: pointer;">ბეჭდვა</button>
+    </div>
+
+    <h2>სახლური გემო — შეკვეთა #{{ order.id }}</h2>
+    <div class="meta">{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+
+    <div class="block">
+        <strong>კლიენტი:</strong> {{ order.customer_name }}<br>
+        <strong>ტელეფონი:</strong> {{ order.phone }}<br>
+        <strong>მისამართი:</strong> {{ order.address }}<br>
+        <strong>მიტანის დრო:</strong> {{ order.delivery_slot }}
+        {% if order.notes %}<br><strong>კომენტარი:</strong> {{ order.notes }}{% endif %}
+    </div>
+
+    <div class="block">
+        <strong>პროდუქტები:</strong>
+        <pre>{{ order.items_summary }}</pre>
+    </div>
+
+    <div class="block">
+        პროდუქტები: {{ "%.2f"|format(order.subtotal) }} ₾<br>
+        {% if order.discount_amount > 0 %}ფასდაკლება: -{{ "%.2f"|format(order.discount_amount) }} ₾<br>{% endif %}
+        {% if order.bonus_used > 0 %}ბონუსი: -{{ "%.2f"|format(order.bonus_used) }} ₾<br>{% endif %}
+        მიტანა: {{ "%.2f"|format(order.shipping_fee) }} ₾
+        <div class="total">გადასახდელი: {{ "%.2f"|format(order.total_price) }} ₾</div>
+        <div>გადახდა: {{ 'ადგილზე' if order.payment_method == 'cash' else 'გადარიცხულია' }}</div>
+    </div>
+</body>
+</html>

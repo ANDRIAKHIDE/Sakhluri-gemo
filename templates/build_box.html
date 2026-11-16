@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}ააწყვე საოჯახო ბოქსი (-10%) — სახლური გემო{% endblock %}
+{% block content %}
+
+<div class="bg-white border rounded-4 p-4 p-lg-5 mb-4">
+    <span class="hero-eyebrow mb-2">კომბო შეთავაზება</span>
+    <h1 class="h2 fw-bold mb-2">ააწყვე შენი საოჯახო ბოქსი და მიიღე 10% ფასდაკლება</h1>
+    <p class="text-muted small mb-0">
+        აირჩიეთ ნებისმიერი <strong>3 ან მეტი</strong> განსხვავებული პროდუქტი ქვემოთ მოცემული სიიდან და კალათაში ავტომატურად დაგერიცხებათ 10%-იანი ფასდაკლება.
+    </p>
+</div>
+
+<form method="POST" id="boxBuilderForm">
+    <div class="row g-3 mb-4">
+        {% for p in products %}
+        <div class="col-md-6 col-lg-4">
+            <div class="bg-white border rounded-4 p-3 h-100 d-flex align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ p.image_url }}" alt="{{ p.title }}" class="rounded-3 border" style="width: 64px; height: 64px; object-fit: cover;">
+                    <div>
+                        <div class="small text-muted">{{ p.category }}</div>
+                        <div class="fw-bold small">{{ p.title }}</div>
+                        <div class="text-danger fw-bold small">{{ "%.2f"|format(p.price) }} ₾ <span class="text-muted fw-normal">/ {{ p.unit }}</span></div>
+                    </div>
+                </div>
+                <div style="width: 82px;">
+                    <input type="number" name="qty_{{ p.id }}" value="0" min="0" max="100"
+                           data-price="{{ p.price }}"
+                           class="form-control text-center rounded-3 box-qty-input">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="bg-white border rounded-4 p-4 d-flex flex-wrap justify-content-between align-items-center gap-3 sticky-bottom shadow-sm">
+        <div>
+            <div class="small text-muted">არჩეული პოზიციები: <strong id="selectedCount">0</strong> / 3 მინიმუმ</div>
+            <div class="fs-5 fw-bold">
+                ჯამი ფასდაკლებით: <span id="boxFinalPrice" class="text-success">0.00 ₾</span>
+                <small id="boxOldPrice" class="text-muted text-decoration-line-through ms-2 fs-6"></small>
+            </div>
+        </div>
+        <button type="submit" id="submitBoxBtn" class="btn btn-brand btn-lg px-4" disabled>
+            ბოქსის კალათაში გადატანა
+        </button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const inputs = document.querySelectorAll('.box-qty-input');
+    const countEl = document.getElementById('selectedCount');
+    const finalEl = document.getElementById('boxFinalPrice');
+    const oldEl = document.getElementById('boxOldPrice');
+    const submitBtn = document.getElementById('submitBoxBtn');
+
+    function recalcBox() {
+        let distinct = 0;
+        let rawTotal = 0;
+        inputs.forEach(inp => {
+            const q = parseInt(inp.value) || 0;
+            const pr = parseFloat(inp.dataset.price) || 0;
+            if (q > 0) {
+                distinct += 1;
+                rawTotal += q * pr;
+            }
+        });
+
+        countEl.textContent = distinct;
+        if (distinct >= 3) {
+            const discounted = rawTotal * 0.90;
+            finalEl.textContent = discounted.toFixed(2) + ' ₾ (-10%)';
+            oldEl.textContent = rawTotal.toFixed(2) + ' ₾';
+            submitBtn.disabled = false;
+        } else {
+            finalEl.textContent = rawTotal.toFixed(2) + ' ₾';
+            oldEl.textContent = '';
+            submitBtn.disabled = true;
+        }
+    }
+
+    inputs.forEach(inp => inp.addEventListener('input', recalcBox));
+});
+</script>
+
+{% endblock %}

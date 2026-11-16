@@ -4,45 +4,80 @@
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h4 class="fw-bold mb-4">🚚 მიტანისა და გადახდის დეტალები</h4>
+        <div class="bg-white border rounded-4 p-4">
+            <h4 class="fw-bold mb-4">მიტანისა და გადახდის დეტალები</h4>
             <form method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">სახელი და გვარი *</label>
+                    <label class="form-label small fw-semibold">სახელი და გვარი *</label>
                     <input type="text" name="customer_name" class="form-control rounded-3"
                            value="{{ current_user.username if current_user.is_authenticated else '' }}" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">ტელეფონის ნომერი *</label>
+                    <label class="form-label small fw-semibold">ტელეფონის ნომერი *</label>
                     <input type="text" name="phone" class="form-control rounded-3" placeholder="5XX XX XX XX"
                            value="{{ current_user.phone or '' if current_user.is_authenticated else '' }}" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">ზუსტი მისამართი (ქუჩა, კორპუსი, ბინა) *</label>
+                    <label class="form-label small fw-semibold">ზუსტი მისამართი (ქუჩა, კორპუსი, ბინა) *</label>
                     <input type="text" name="address" class="form-control rounded-3"
                            value="{{ current_user.address or '' if current_user.is_authenticated else '' }}" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">დამატებითი კომენტარი კურიერისთვის</label>
-                    <textarea name="notes" rows="2" class="form-control rounded-3" placeholder="მაგ: სადარბაზოს კოდი, სასურველი დრო..."></textarea>
+                    <label class="form-label small fw-semibold">მიტანის სასურველი დრო *</label>
+                    <select name="delivery_slot" class="form-select rounded-3">
+                        {% for slot in delivery_slots %}
+                        <option value="{{ slot }}">{{ slot }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">გადახდის მეთოდი</label>
+                    <label class="form-label small fw-semibold">კომენტარი კურიერისთვის</label>
+                    <textarea name="notes" rows="2" class="form-control rounded-3" placeholder="სადარბაზოს კოდი, სართული ან დამატებითი მითითება..."></textarea>
+                </div>
+
+                {% if is_first_order and subtotal >= 20 %}
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">მეგობრის მოსაწვევი კოდი (არასავალდებულო — გაკლდებათ 5 ₾)</label>
+                    <input type="text" name="referral_code" class="form-control rounded-3 text-uppercase" placeholder="მაგ: ANDRIA5">
+                </div>
+                {% endif %}
+
+                {% if available_bonus > 0 %}
+                <div class="p-3 rounded-3 mb-4" style="background-color: #eef8f1; border: 1px solid #b7e1c4;">
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="payment_method" id="payCash" value="cash" checked>
-                        <label class="form-check-label" for="payCash">💵 კურიერთან გადახდა (ნაღდი ანგარიშსწორება)</label>
+                        <input class="form-check-input" type="checkbox" name="use_bonus" id="useBonusCheck" value="1">
+                        <label class="form-check-label fw-semibold text-success" for="useBonusCheck">
+                            ბონუს-ბალანსის გამოყენება (-{{ "%.2f"|format(available_bonus) }} ₾)
+                        </label>
                     </div>
-                    <div class="form-check mt-1">
-                        <input class="form-check-input" type="radio" name="payment_method" id="payTransfer" value="transfer">
-                        <label class="form-check-label" for="payTransfer">🏦 საბანკო გადარიცხვა (ქვითრის ატვირთვით)</label>
+                </div>
+                {% endif %}
+
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold d-block mb-2">გადახდის მეთოდი</label>
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="payCash" value="cash" checked>
+                            <label class="form-check-label fw-semibold" for="payCash">
+                                ადგილზე გადახდა (ბარათით ტერმინალზე ან ნაღდით)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="border rounded-3 p-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="payTransfer" value="transfer">
+                            <label class="form-check-label fw-semibold" for="payTransfer">
+                                საბანკო გადარიცხვა (ქვითრის ატვირთვით)
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <div id="receiptUploadSection" class="bg-light p-3 rounded-4 mb-3" style="display: none;">
+                <div id="receiptUploadSection" class="p-3 rounded-3 mb-4" style="display: none; background-color: var(--bg-stone); border: 1px solid var(--border);">
                     <p class="small mb-2">
                         <strong>ანგარიშის ნომერი (TBC / BOG):</strong> <code>GE00TB0000000000000000</code><br>
                         გადარიცხვის შემდეგ ატვირთეთ ქვითრის სქრინი:
@@ -50,20 +85,26 @@
                     <input type="file" name="receipt" class="form-control rounded-3" accept="image/*">
                 </div>
 
-                <button type="submit" class="btn btn-terracotta btn-lg w-100 mt-2">✅ შეკვეთის დადასტურება ({{ "%.2f"|format(total_price) }} ₾)</button>
+                <button type="submit" class="btn btn-brand btn-lg w-100">შეკვეთის დადასტურება ({{ "%.2f"|format(total_price) }} ₾)</button>
             </form>
         </div>
     </div>
 
     <div class="col-lg-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            <h5 class="fw-bold mb-3">თქვენი კალათა</h5>
+        <div class="bg-white border rounded-4 p-4">
+            <h5 class="fw-bold mb-3">თქვენი შეკვეთა</h5>
             {% for item in items %}
             <div class="d-flex justify-content-between small mb-2">
                 <span>{{ item.product.title }} × {{ item.quantity }}</span>
                 <strong>{{ "%.2f"|format(item.line_total) }} ₾</strong>
             </div>
             {% endfor %}
+            {% if box_discount > 0 %}
+            <div class="d-flex justify-content-between small text-success mb-2">
+                <span>ბოქსის ფასდაკლება (-10%):</span>
+                <strong>-{{ "%.2f"|format(box_discount) }} ₾</strong>
+            </div>
+            {% endif %}
             <hr>
             <div class="d-flex justify-content-between small mb-1">
                 <span>მიტანა:</span>
@@ -71,7 +112,7 @@
             </div>
             <div class="d-flex justify-content-between fs-5 fw-bold mt-2">
                 <span>ჯამი:</span>
-                <span class="text-danger">{{ "%.2f"|format(total_price) }} ₾</span>
+                <span>{{ "%.2f"|format(total_price) }} ₾</span>
             </div>
         </div>
     </div>
