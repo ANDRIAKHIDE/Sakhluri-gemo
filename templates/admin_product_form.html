@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 p-4 mx-auto" style="max-width: 650px;">
+    <h4 class="fw-bold mb-4">{{ 'პროდუქტის რედაქტირება' if product else 'ახალი პროდუქტის დამატება' }}</h4>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label">დასახელება *</label>
+                <input type="text" name="title" class="form-control" value="{{ product.title if product else '' }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">კატეგორია *</label>
+                <select name="category" class="form-select">
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if product and product.category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">ერთეული *</label>
+                <input type="text" name="unit" class="form-control" value="{{ product.unit if product else '1 ცალი' }}" placeholder="1 ცალი / 1 კგ">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">საცალო ფასი (₾) *</label>
+                <input type="number" step="0.01" name="price" class="form-control" value="{{ product.price if product else '' }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">საბითუმო ფასი (₾)</label>
+                <input type="number" step="0.01" name="wholesale_price" class="form-control" value="{{ product.wholesale_price if product and product.wholesale_price else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">წონა / გრამაჟი</label>
+                <input type="text" name="weight_info" class="form-control" value="{{ product.weight_info if product else '~95 გრ' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">მომზადების დრო</label>
+                <input type="text" name="cooking_time" class="form-control" value="{{ product.cooking_time if product else '7-8 წუთი' }}">
+            </div>
+            <div class="col-12">
+                <label class="form-label">შემადგენლობა</label>
+                <input type="text" name="ingredients" class="form-control" value="{{ product.ingredients if product else '' }}">
+            </div>
+            <div class="col-12">
+                <label class="form-label">აღწერა</label>
+                <textarea name="description" rows="3" class="form-control">{{ product.description if product else '' }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label">ფოტოს ატვირთვა</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+            <div class="col-12 d-flex gap-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="is_featured" id="feat" {% if product and product.is_featured %}checked{% endif %}>
+                    <label class="form-check-label" for="feat">⭐ ბესტსელერი</label>
+                </div>
+                {% if product %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="in_stock" id="stock" {% if product.in_stock %}checked{% endif %}>
+                    <label class="form-check-label" for="stock">მარაგშია</label>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-terracotta px-4">შენახვა</button>
+            <a href="{{ url_for('main.admin_panel') }}" class="btn btn-outline-secondary">გაუქმება</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

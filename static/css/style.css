@@ -1,0 +1,208 @@
+:root {
+    --bg-cream: #FAF6F0;
+    --card-bg: #FFFFFF;
+    --terracotta: #B84A27;
+    --terracotta-dark: #94381B;
+    --sage: #3D5A45;
+    --gold: #D49A3A;
+    --text-dark: #231F20;
+    --text-muted: #6B635E;
+    --border-soft: #EAE1D5;
+}
+
+body {
+    background-color: var(--bg-cream);
+    color: var(--text-dark);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar-custom {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid var(--border-soft);
+    box-shadow: 0 2px 12px rgba(35, 31, 32, 0.04);
+}
+
+.brand-logo {
+    font-weight: 800;
+    font-size: 1.45rem;
+    color: var(--terracotta) !important;
+    letter-spacing: -0.5px;
+}
+
+.brand-badge {
+    background-color: var(--sage);
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    vertical-align: middle;
+}
+
+.hero-banner {
+    background: linear-gradient(135deg, #2D1E17 0%, #5A2818 55%, #8F3A1E 100%);
+    color: #FFFDF9;
+    border-radius: 24px;
+    padding: 3.2rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 14px 35px rgba(90, 40, 24, 0.18);
+}
+
+.hero-pill {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.btn-terracotta {
+    background-color: var(--terracotta);
+    border-color: var(--terracotta);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-terracotta:hover {
+    background-color: var(--terracotta-dark);
+    border-color: var(--terracotta-dark);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-outline-terracotta {
+    border: 1.5px solid var(--terracotta);
+    color: var(--terracotta);
+    font-weight: 600;
+    border-radius: 12px;
+}
+
+.btn-outline-terracotta:hover {
+    background-color: var(--terracotta);
+    color: #fff;
+}
+
+.category-chip {
+    background: #fff;
+    border: 1px solid var(--border-soft);
+    color: var(--text-dark);
+    padding: 8px 18px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.92rem;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.category-chip:hover, .category-chip.active {
+    background: var(--terracotta);
+    color: #fff;
+    border-color: var(--terracotta);
+}
+
+.product-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 28px rgba(35, 31, 32, 0.08);
+}
+
+.product-img-wrap {
+    height: 200px;
+    background: linear-gradient(145deg, #F5ECE0, #EADBC8);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.product-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.food-emoji-placeholder {
+    font-size: 4.2rem;
+    user-select: none;
+}
+
+.badge-featured {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--gold);
+    color: #1E1916;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.btn-like {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: transform 0.15s;
+}
+
+.btn-like.liked {
+    color: #E11D48;
+}
+
+.btn-like:hover {
+    transform: scale(1.1);
+}
+
+.price-tag {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--terracotta);
+}
+
+.unit-tag {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.trust-box {
+    background: #FFFFFF;
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 1.4rem;
+}
+
+.footer-custom {
+    background: #231F20;
+    color: #D6CFC7;
+    margin-top: auto;
+}

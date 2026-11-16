@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }} — სახლური გემო{% endblock %}
+{% block content %}
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.home') }}">მთავარი</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('main.home', category=product.category) }}">{{ product.category }}</a></li>
+        <li class="breadcrumb-item active">{{ product.title }}</li>
+    </ol>
+</nav>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-5">
+    <div class="row g-4 align-items-center">
+        <div class="col-md-5">
+            <div class="product-img-wrap rounded-4" style="height: 330px;">
+                {% if product.image_file and product.image_file != 'default_food.png' %}
+                    <img src="{{ url_for('static', filename='uploads/' + product.image_file) }}" alt="{{ product.title }}">
+                {% else %}
+                    <span style="font-size: 7rem;">🥟</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-success">{{ product.category }}</span>
+                <span class="badge bg-warning text-dark">★ {{ avg_rating }} ({{ reviews|length }} შეფასება)</span>
+            </div>
+
+            <h2 class="fw-bold mb-2">{{ product.title }}</h2>
+            <p class="text-muted mb-3">{{ product.description }}</p>
+
+            <div class="bg-light rounded-4 p-3 mb-3">
+                <div class="mb-2"><strong>🥗 შემადგენლობა:</strong> {{ product.ingredients or 'ნატურალური ინგრედიენტები' }}</div>
+                <div class="mb-2"><strong>⏱ მომზადების დრო:</strong> {{ product.cooking_time }} (მდუღარე მარილიან წყალში, გაულღობლად)</div>
+                {% if product.wholesale_price %}
+                <div class="text-success small"><strong>🏪 საბითუმო ფასი (მაღაზიებისთვის):</strong> {{ "%.2f"|format(product.wholesale_price) }} ₾ / {{ product.unit }}</div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex align-items-baseline gap-2 mb-4">
+                <span class="display-6 fw-bold text-danger">{{ "%.2f"|format(product.price) }} ₾</span>
+                <span class="text-muted">/ {{ product.unit }} ({{ product.weight_info }})</span>
+            </div>
+
+            <form method="POST" action="{{ url_for('main.add_to_cart', product_id=product.id) }}" class="d-flex gap-3 align-items-center">
+                <div style="width: 110px;">
+                    <label class="small text-muted">რაოდენობა</label>
+                    <input type="number" name="quantity" value="{{ 10 if product.unit == '1 ცალი' else 1 }}" min="1" class="form-control form-control-lg text-center rounded-3">
+                </div>
+                <button type="submit" class="btn btn-terracotta btn-lg px-5 mt-3">🛒 კალათაში დამატება</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- REVIEWS SECTION -->
+<div class="row g-4">
+    <div class="col-lg-7">
+        <h4 class="fw-bold mb-3">მომხმარებელთა შეფასებები ({{ reviews|length }})</h4>
+        {% for rev in reviews %}
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+            <div class="d-flex justify-content-between">
+                <strong>👤 {{ rev.author.username }}</strong>
+                <span class="text-warning">{{ '★' * rev.rating }}</span>
+            </div>
+            <p class="mb-1 mt-2">{{ rev.comment }}</p>
+            <small class="text-muted">{{ rev.date_posted.strftime('%d.%m.%Y') }}</small>
+        </div>
+        {% else %}
+        <p class="text-muted">ჯერ შეფასება არ არის. იყავით პირველი!</p>
+        {% endfor %}
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h5 class="fw-bold mb-3">დატოვეთ შეფასება</h5>
+            {% if current_user.is_authenticated %}
+            <form method="POST" action="{{ url_for('main.add_review', product_id=product.id) }}">
+                <div class="mb-3">
+                    <label class="form-label">შეფასება (1-5)</label>
+                    <select name="rating" class="form-select rounded-3">
+                        <option value="5">⭐⭐⭐⭐⭐ (5 - იდეალურია)</option>
+                        <option value="4">⭐⭐⭐⭐ (4 - ძალიან გემრიელია)</option>
+                        <option value="3">⭐⭐⭐ (3 - ნორმალურია)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">კომენტარი</label>
+                    <textarea name="comment" rows="3" class="form-control rounded-3" placeholder="გაგვიზიარეთ თქვენი შთაბეჭდილება..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-terracotta w-100">გაგზავნა</button>
+            </form>
+            {% else %}
+            <p class="text-muted small">შეფასების დასატოვებლად გაიარეთ <a href="{{ url_for('main.login') }}">ავტორიზაცია</a>.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

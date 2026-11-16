@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- HERO BANNER -->
+<section class="hero-banner mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="hero-pill">✨ 100% ნატურალური ხორცი და ქორფა მწვანილი</span>
+            <h1 class="display-5 fw-bold mb-3">ოჯახური სითბოთი მოხვეული ქართული ნახევარფაბრიკატები</h1>
+            <p class="lead opacity-90 mb-4">
+                ვამზადებთ სახლში, იდეალურ სისუფთავეში — ზუსტად ისე, როგორც საკუთარი ოჯახისთვის.
+                ჩაყარეთ მდუღარე წყალში და 7 წუთში ნამდვილი ქართული სუფრა მზადაა!
+            </p>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="#catalog" class="btn btn-light btn-lg fw-bold px-4 rounded-4 text-dark">მენიუს ნახვა</a>
+                <a href="{{ url_for('main.home', category='საოჯახო სეტები') }}#catalog" class="btn btn-outline-light btn-lg px-4 rounded-4">საოჯახო სეტები (-7%)</a>
+            </div>
+        </div>
+        <div class="col-lg-4 text-center d-none d-lg-block">
+            <div style="font-size: 7rem;">🥟🍲</div>
+            <div class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill">50 ₾-დან უფასო მიტანა</div>
+        </div>
+    </div>
+</section>
+
+<!-- TRUST INDICATORS -->
+<section class="row g-3 mb-5">
+    <div class="col-md-4">
+        <div class="trust-box h-100">
+            <div class="fs-3 mb-1">🥩</div>
+            <h6 class="fw-bold">მხოლოდ ახალი ხორცი</h6>
+            <p class="small text-muted mb-0">ყოველდღიურად შეძენილი ნატურალური საქონლისა და ღორის ხორცი, სოიოსა და დანამატების გარეშე.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="trust-box h-100">
+            <div class="fs-3 mb-1">❄️</div>
+            <h6 class="fw-bold">შოკური გაყინვა და სისუფთავე</h6>
+            <p class="small text-muted mb-0">ჰერმეტული შეფუთვა ეტიკეტითა და მოხარშვის ზუსტი ინსტრუქციით.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="trust-box h-100">
+            <div class="fs-3 mb-1">🚚</div>
+            <h6 class="fw-bold">სწრაფი მიტანა კარამდე</h6>
+            <p class="small text-muted mb-0">თბილისის მასშტაბით სწრაფი კურიერული მომსახურება. 50 ₾-დან მიტანა უფასოა!</p>
+        </div>
+    </div>
+</section>
+
+<!-- SEARCH & CATEGORY FILTER -->
+<section id="catalog" class="mb-4">
+    <div class="row g-3 align-items-center justify-content-between mb-3">
+        <div class="col-lg-7 d-flex flex-wrap gap-2">
+            <a href="{{ url_for('main.home') }}#catalog"
+               class="category-chip {% if not selected_category %}active{% endif %}">ყველა ({{ products|length }})</a>
+            {% for cat in categories %}
+            <a href="{{ url_for('main.home', category=cat) }}#catalog"
+               class="category-chip {% if selected_category == cat %}active{% endif %}">{{ cat }}</a>
+            {% endfor %}
+        </div>
+        <div class="col-lg-4">
+            <form method="GET" action="{{ url_for('main.home') }}#catalog" class="d-flex gap-2">
+                <input type="text" name="q" value="{{ search_query }}" class="form-control rounded-4" placeholder="ძიება (მაგ: ხინკალი, პელმენი...)">
+                <button class="btn btn-terracotta px-3" type="submit">ძიება</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- PRODUCTS GRID -->
+<section class="row g-4">
+    {% for product in products %}
+    <div class="col-sm-6 col-lg-4 col-xl-3">
+        <div class="product-card">
+            <div class="product-img-wrap">
+                {% if product.is_featured %}
+                <span class="badge-featured">⭐ ბესტსელერი</span>
+                {% endif %}
+
+                {% if current_user.is_authenticated %}
+                <button class="btn-like {% if product.id in user_liked_ids %}liked{% endif %}"
+                        data-product-id="{{ product.id }}" title="რჩეულებში დამატება">
+                    {{ '❤️' if product.id in user_liked_ids else '🤍' }}
+                </button>
+                {% endif %}
+
+                <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="text-decoration-none w-100 h-100 d-flex align-items-center justify-content-center">
+                    {% if product.image_file and product.image_file != 'default_food.png' %}
+                        <img src="{{ url_for('static', filename='uploads/' + product.image_file) }}" alt="{{ product.title }}">
+                    {% else %}
+                        <span class="food-emoji-placeholder">
+                            {% if 'ხინკალი' in product.title %}🥟
+                            {% elif 'პელმენი' in product.title or 'ვარენიკი' in product.title %}🥣
+                            {% elif 'ქაბაბი' in product.title or 'კატლეტი' in product.title %}🥩
+                            {% elif 'ბლინები' in product.title %}🥞
+                            {% elif 'ტოლმა' in product.title %}🌿
+                            {% else %}🎁{% endif %}
+                        </span>
+                    {% endif %}
+                </a>
+            </div>
+
+            <div class="p-3 d-flex flex-column flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-light text-secondary border">{{ product.category }}</span>
+                    <small class="text-muted">⏱ {{ product.cooking_time }}</small>
+                </div>
+
+                <h5 class="fw-bold mb-1">
+                    <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="text-decoration-none text-dark">
+                        {{ product.title }}
+                    </a>
+                </h5>
+
+                <p class="small text-muted mb-3 flex-grow-1">
+                    {{ product.description[:85] }}{% if product.description|length > 85 %}...{% endif %}
+                </p>
+
+                <div class="d-flex align-items-baseline justify-content-between mb-3">
+                    <div>
+                        <span class="price-tag">{{ "%.2f"|format(product.price) }} ₾</span>
+                        <span class="unit-tag">/ {{ product.unit }}</span>
+                    </div>
+                    {% if product.weight_info %}
+                    <small class="text-muted">{{ product.weight_info }}</small>
+                    {% endif %}
+                </div>
+
+                <form method="POST" action="{{ url_for('main.add_to_cart', product_id=product.id) }}" class="d-flex gap-2">
+                    <input type="number" name="quantity" value="{{ 10 if product.unit == '1 ცალი' else 1 }}"
+                           min="1" max="200" class="form-control text-center rounded-3" style="width: 75px;">
+                    <button type="submit" class="btn btn-terracotta flex-grow-1">
+                        + კალათაში
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <h4>პროდუქტი ვერ მოიძებნა</h4>
+        <a href="{{ url_for('main.home') }}" class="btn btn-outline-terracotta mt-2">მენიუს განახლება</a>
+    </div>
+    {% endfor %}
+</section>
+
+{% endblock %}

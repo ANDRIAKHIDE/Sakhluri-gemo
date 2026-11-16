@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 p-4 mx-auto" style="max-width: 440px;">
+    <h3 class="fw-bold text-center mb-4">სისტემაში შესვლა</h3>
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">ელ-ფოსტა</label>
+            <input type="email" name="email" class="form-control rounded-3" placeholder="admin@saxluri.ge" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">პაროლი</label>
+            <input type="password" name="password" class="form-control rounded-3" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-terracotta w-100 py-2">შესვლა</button>
+    </form>
+    <div class="text-center mt-3 small">
+        არ გაქვთ ანგარიში? <a href="{{ url_for('main.register') }}">დარეგისტრირდით</a>
+    </div>
+</div>
+{% endblock %}
