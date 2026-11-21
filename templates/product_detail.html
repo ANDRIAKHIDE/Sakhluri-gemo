@@ -1,93 +1,120 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
 {% block title %}{{ product.title }} — სახლური გემო{% endblock %}
+
 {% block content %}
-
-<div class="bg-white border rounded-4 p-4 p-lg-5 mb-5">
-    <div class="row g-5 align-items-center">
-        <div class="col-lg-6">
-            <img src="{{ product.image_url }}" alt="{{ product.title }}" class="img-fluid rounded-4 border w-100" style="max-height: 440px; object-fit: cover;">
-        </div>
-        <div class="col-lg-6">
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <span class="badge bg-light text-dark border">{{ product.category }}</span>
-                <span class="badge bg-light text-dark border"><i class="bi bi-clock me-1"></i>{{ product.cooking_time }}</span>
-                {% if product.dietary_tag == 'fasting' %}
-                <span class="badge bg-success">სამარხვო</span>
-                {% elif product.dietary_tag == 'kids' %}
-                <span class="badge bg-primary">საბავშვო</span>
-                {% elif product.dietary_tag == 'spicy' %}
-                <span class="badge bg-danger">ცხარე</span>
-                {% endif %}
-                <span class="small text-warning fw-bold"><i class="bi bi-star-fill"></i> {{ avg_rating }} ({{ reviews|length }} შეფასება)</span>
-            </div>
-
-            <h1 class="fw-bold mb-3">{{ product.title }}</h1>
-            <div class="fs-3 fw-bold mb-3" style="color: var(--accent);">
-                {{ "%.2f"|format(product.price) }} ₾ <small class="fs-6 text-muted fw-normal">/ {{ product.unit }} {{ '(' ~ product.weight_info ~ ')' if product.weight_info else '' }}</small>
-            </div>
-
-            <p class="text-muted mb-4">{{ product.description }}</p>
-
-            {% if product.ingredients %}
-            <div class="p-3 rounded-3 mb-3" style="background-color: var(--bg-stone);">
-                <strong class="small d-block mb-1">შემადგენლობა:</strong>
-                <span class="small text-muted">{{ product.ingredients }}</span>
-            </div>
-            {% endif %}
-
-            {% if product.allergens %}
-            <div class="p-3 rounded-3 mb-4" style="background-color: #fff8e6; border: 1px solid #ffe08a;">
-                <strong class="small d-block mb-1 text-warning-emphasis"><i class="bi bi-exclamation-triangle me-1"></i>ალერგენები:</strong>
-                <span class="small text-dark">{{ product.allergens }}</span>
-            </div>
-            {% endif %}
-
-            <form method="POST" action="{{ url_for('main.add_to_cart', product_id=product.id) }}" class="d-flex align-items-center gap-3 ajax-cart-form">
-                <input type="number" name="quantity" value="1" min="1" max="50" class="form-control text-center rounded-3" style="width: 90px; height: 48px;">
-                <button type="submit" class="btn btn-brand btn-lg px-4 flex-grow-1">
-                    <i class="bi bi-bag-plus me-2"></i>კალათაში დამატება
-                </button>
-            </form>
-        </div>
-    </div>
+<div style="margin: 18px 0;">
+    <a href="{{ url_for('main.home') }}" class="btn btn-outline btn-sm">← მენიუში დაბრუნება</a>
 </div>
 
-<div class="row g-4">
-    <div class="col-lg-7">
-        <div class="bg-white border rounded-4 p-4">
-            <h5 class="fw-bold mb-4">მომხმარებელთა შეფასებები ({{ reviews|length }})</h5>
-            {% for r in reviews %}
-            <div class="border-bottom pb-3 mb-3">
-                <div class="d-flex justify-content-between small mb-1">
-                    <strong>{{ r.author.username }}</strong>
-                    <span class="text-warning">{% for _ in range(r.rating) %}<i class="bi bi-star-fill"></i>{% endfor %}</span>
-                </div>
-                <p class="small text-muted mb-0">{{ r.comment }}</p>
-            </div>
+<div class="card-box" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; align-items: start;">
+    <!-- მარცხენა სვეტი: ფოტო -->
+    <div style="position: relative; border-radius: 14px; overflow: hidden; background: #EFECE6;">
+        {% set img_src = product.image_file if product.image_file.startswith('http') or product.image_file.startswith('/') else url_for('static', filename='uploads/' + product.image_file) %}
+        <img src="{{ img_src }}" alt="{{ product.title }}" style="width: 100%; max-height: 400px; object-fit: cover; display: block;">
+        <div class="badges-top">
+            {% if product.dietary_tag == 'fasting' %}
+                <span class="badge badge-fasting">სამარხვო</span>
             {% else %}
-            <p class="text-muted small">ჯერ შეფასებები არ არის. იყავით პირველი!</p>
-            {% endfor %}
-
-            {% if current_user.is_authenticated %}
-            <form method="POST" action="{{ url_for('main.add_review', product_id=product.id) }}" class="mt-4 pt-3 border-top">
-                <h6 class="fw-bold mb-3">დატოვეთ შეფასება</h6>
-                <div class="mb-2">
-                    <select name="rating" class="form-select rounded-3" style="max-width: 180px;">
-                        <option value="5">5 — შესანიშნავი</option>
-                        <option value="4">4 — ძალიან კარგი</option>
-                        <option value="3">3 — კარგი</option>
-                        <option value="2">2 — საშუალო</option>
-                        <option value="1">1 — უკმაყოფილო</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <textarea name="comment" rows="2" class="form-control rounded-3" placeholder="გაგვიზიარეთ თქვენი შთაბეჭდილება..." required></textarea>
-                </div>
-                <button type="submit" class="btn btn-outline-brand btn-sm">შეფასების გაგზავნა</button>
-            </form>
+                <span class="badge badge-standard">კლასიკური</span>
+            {% endif %}
+            {% if product.in_stock and (product.stock_qty or 0) > 0 %}
+                <span class="badge badge-stock">მარაგშია: {{ product.stock_qty }}</span>
+            {% else %}
+                <span class="badge" style="background: #B91C1C; color: #fff;">მარაგი ამოწურულია</span>
             {% endif %}
         </div>
     </div>
+
+    <!-- მარჯვენა სვეტი: აღწერა და კალათაში დამატება -->
+    <div>
+        <span class="product-cat">{{ product.category }}</span>
+        <h1 style="font-size: 1.65rem; font-weight: 800; margin: 6px 0 12px; line-height: 1.25;">{{ product.title }}</h1>
+
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px;">
+            <span style="font-size: 1.75rem; font-weight: 800; color: var(--primary);">{{ "%.2f"|format(product.price) }} ₾</span>
+            <span style="color: var(--text-muted); font-weight: 600;">/ {{ product.unit }}</span>
+            <span style="margin-left: auto; font-size: 0.88rem; font-weight: 700; color: var(--accent-amber);">★ {{ avg_rating }} ({{ reviews|length }} შეფასება)</span>
+        </div>
+
+        <p style="color: var(--text-dark); margin-bottom: 18px;">{{ product.description }}</p>
+
+        <div class="product-meta-pills" style="margin-bottom: 18px;">
+            <span class="meta-chip">შეფუთვა: {{ product.unit }}</span>
+            {% if product.weight_info %}<span class="meta-chip">წონა: {{ product.weight_info }}</span>{% endif %}
+            {% if product.cooking_time %}<span class="meta-chip">მომზადება: {{ product.cooking_time }}</span>{% endif %}
+        </div>
+
+        {% if product.ingredients %}
+        <div style="background: var(--bg-main); padding: 12px 14px; border-radius: 10px; margin-bottom: 12px; font-size: 0.9rem;">
+            <strong>შემადგენლობა:</strong> {{ product.ingredients }}
+        </div>
+        {% endif %}
+
+        {% if product.allergens %}
+        <div style="background: var(--accent-amber-soft); color: var(--accent-amber); padding: 10px 14px; border-radius: 10px; margin-bottom: 18px; font-size: 0.86rem; font-weight: 600;">
+            ალერგენები: {{ product.allergens }}
+        </div>
+        {% endif %}
+
+        {% if product.in_stock and (product.stock_qty or 0) > 0 %}
+        <form method="POST" action="{{ url_for('main.add_to_cart', product_id=product.id) }}" class="ajax-cart-form" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div class="qty-controls">
+                <button type="button" class="qty-btn" onclick="stepDetailQty(-1)">-</button>
+                <input type="number" name="quantity" id="detail-qty-input" value="1" min="1" max="{{ product.stock_qty }}" readonly style="width: 48px; text-align: center; border: none; font-weight: 700; background: transparent;">
+                <button type="button" class="qty-btn" onclick="stepDetailQty(1)">+</button>
+            </div>
+            <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px 20px; font-size: 1rem;">
+                კალათაში დამატება
+            </button>
+        </form>
+        {% else %}
+        <div class="alert alert-warning">ამჟამად ეს პროდუქტი მარაგში აღარ არის.</div>
+        {% endif %}
+    </div>
 </div>
 
+<!-- შეფასებები -->
+<div class="card-box">
+    <h3 style="margin-bottom: 16px;">მომხმარებლების შეფასებები ({{ reviews|length }})</h3>
+
+    {% if current_user.is_authenticated %}
+    <form method="POST" action="{{ url_for('main.add_review', product_id=product.id) }}" style="margin-bottom: 22px; background: var(--bg-main); padding: 16px; border-radius: 12px;">
+        <div style="display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;">
+            <select name="rating" class="form-control" style="width: auto;">
+                <option value="5">★★★★★ (5/5 — შესანიშნავი)</option>
+                <option value="4">★★★★☆ (4/5 — კარგი)</option>
+                <option value="3">★★★☆☆ (3/5 — ნორმალური)</option>
+            </select>
+            <input type="text" name="comment" required class="form-control" style="flex: 1; min-width: 220px;" placeholder="გაგვიზიარეთ თქვენი შთაბეჭდილება...">
+            <button type="submit" class="btn btn-primary btn-sm">დამატება</button>
+        </div>
+    </form>
+    {% endif %}
+
+    {% if reviews %}
+        {% for r in reviews %}
+        <div style="padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <strong>{{ r.author.username }}</strong>
+                <span style="color: var(--accent-amber); font-weight: 700;">★ {{ r.rating }}/5</span>
+            </div>
+            <p style="font-size: 0.92rem; color: var(--text-dark);">{{ r.comment }}</p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem;">შეფასებები ჯერ არ არის. იყავით პირველი!</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function stepDetailQty(delta) {
+    const inp = document.getElementById('detail-qty-input');
+    const max = parseInt(inp.getAttribute('max')) || 1;
+    let val = parseInt(inp.value) || 1;
+    inp.value = Math.max(1, Math.min(max, val + delta));
+}
+</script>
 {% endblock %}

@@ -5,12 +5,14 @@ import json
 import uuid
 import urllib.request
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session, jsonify, Response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session, jsonify, Response, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from ext import db
 from models import User, Product, Order, ProductLike, Review
@@ -359,7 +361,11 @@ def checkout():
 
         ref_discount = 0.0
         applied_ref_code = None
-        if ref_input and subtotal >= 20.0:
+        if ref_input:
+            if subtotal < 20.0:
+                flash('რეფერალური კოდი მოქმედებს მინიმუმ 20.00 ₾-იან შეკვეთაზე.', 'warning')
+                return redirect(url_for('main.checkout'))
+
             referrer = User.query.filter_by(referral_code=ref_input).first()
             already_used_phone = Order.query.filter(Order.phone == phone, Order.status != 'cancelled').first() is not None
             is_self = current_user.is_authenticated and referrer and referrer.id == current_user.id
@@ -369,7 +375,7 @@ def checkout():
                 applied_ref_code = ref_input
                 total_price = max(0.0, round(total_price - ref_discount, 2))
             else:
-                flash('რეფერალური კოდი არასწორია ან უკვე გამოყენებულია (მოქმედებს მხოლოდ პირველ შეკვეთაზე 20 ₾-დან).', 'warning')
+                flash('რეფერალური კოდი არასწორია ან უკვე გამოყენებულია (მოქმედებს მხოლოდ პირველ შეკვეთაზე).', 'warning')
                 return redirect(url_for('main.checkout'))
 
         bonus_deducted = 0.0
@@ -425,6 +431,7 @@ def checkout():
         db.session.commit()
         session.pop('cart', None)
         session.pop('is_box_combo', None)
+        session.pop('pending_ref_code', None)
 
         pay_label = "საბანკო გადარიცხვა (ქვითრით)" if payment_method == 'transfer' else "ადგილზე გადახდა"
         sold_out_block = ("\n\n" + "\n".join(sold_out_alerts)) if sold_out_alerts else ""
@@ -446,6 +453,7 @@ def checkout():
         flash(f'შეკვეთა #{new_order.id} მიღებულია! მალე დაგიკავშირდებით.', 'success')
         return redirect(url_for('main.order_success', order_id=new_order.id))
 
+    saved_ref_code = session.get('pending_ref_code', '')
     return render_template(
         'checkout.html',
         items=items,
@@ -455,9 +463,9 @@ def checkout():
         total_price=total_price,
         available_bonus=available_bonus,
         is_first_order=is_first_order,
-        delivery_slots=DELIVERY_SLOTS
+        delivery_slots=DELIVERY_SLOTS,
+        saved_ref_code=saved_ref_code
     )
-
 
 @main.route('/order-success/<int:order_id>')
 def order_success(order_id):
@@ -500,6 +508,23 @@ def reorder(order_id):
     flash('შეკვეთის პროდუქტები ამჟამად მარაგში აღარ არის.', 'warning')
     return redirect(url_for('main.profile'))
 
+@main.route('/api/check-referral')
+def check_referral_api():
+    code = request.args.get('code', '').strip().upper()
+    if not code:
+        return jsonify({'valid': False, 'message': ''})
+
+    referrer = User.query.filter_by(referral_code=code).first()
+    if not referrer:
+        return jsonify({'valid': False, 'message': '✕ ასეთი რეფერალური კოდი ვერ მოიძებნა'})
+
+    if current_user.is_authenticated and referrer.id == current_user.id:
+        return jsonify({'valid': False, 'message': '✕ საკუთარი კოდის გამოყენება არ შეიძლება'})
+
+    return jsonify({
+        'valid': True,
+        'message': f'✓ კოდი ვალიდურია (მოგიწვიათ: {referrer.username}) — პირველ შეკვეთაზე (20 ₾+) მიიღებთ -5.00 ₾ ფასდაკლებას!'
+    })
 
 # --- 6. ავტორიზაცია / რეგისტრაცია / პროფილი ---
 @main.route('/register', methods=['GET', 'POST'])
@@ -507,12 +532,16 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
 
+    # თუ ბმულით შემოვიდა (?ref=CODE)
+    prefill_ref = request.args.get('ref', '').strip().upper()
+
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
         phone = request.form.get('phone', '').strip()
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+        ref_code_input = request.form.get('referral_code', '').strip().upper()
 
         if password != confirm_password:
             flash('პაროლები ერთმანეთს არ ემთხვევა!', 'danger')
@@ -521,6 +550,13 @@ def register():
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash('მომხმარებელი ამ სახელით ან ელ-ფოსტით უკვე არსებობს!', 'danger')
             return redirect(url_for('main.register'))
+
+        valid_referrer = None
+        if ref_code_input:
+            valid_referrer = User.query.filter_by(referral_code=ref_code_input).first()
+            if not valid_referrer:
+                flash('მითითებული რეფერალური კოდი არ არსებობს! შეამოწმეთ კოდი ან დატოვეთ ველი ცარიელი.', 'danger')
+                return redirect(url_for('main.register'))
 
         new_user = User(
             username=username,
@@ -535,10 +571,16 @@ def register():
         db.session.commit()
 
         login_user(new_user)
-        flash('რეგისტრაცია წარმატებით დასრულდა!', 'success')
+
+        if valid_referrer:
+            session['pending_ref_code'] = valid_referrer.referral_code
+            flash(f'რეგისტრაცია დასრულდა! თქვენი კოდია {new_user.referral_code}. მეგობრის კოდი ({valid_referrer.referral_code}) გააქტიურდა — პირველ შეკვეთაზე (20 ₾-დან) დაგაკლდებათ 5.00 ₾!', 'success')
+        else:
+            flash(f'რეგისტრაცია წარმატებით დასრულდა! თქვენი პირადი რეფერალური კოდია: {new_user.referral_code}', 'success')
+
         return redirect(url_for('main.home'))
 
-    return render_template('register.html')
+    return render_template('register.html', prefill_ref=prefill_ref)
 
 
 @main.route('/login', methods=['GET', 'POST'])
@@ -590,10 +632,96 @@ def profile():
 
 
 # --- 7. ადმინ პანელი ---
+def filter_orders_by_period(period, date_from_str='', date_to_str=''):
+    now = datetime.now()
+    query = Order.query.filter(Order.status != 'cancelled')
+
+    if period == 'today':
+        start_dt = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Order.created_at >= start_dt)
+        label = f"დღევანდელი ({now.strftime('%d.%m.%Y')})"
+    elif period == 'week':
+        start_dt = (now - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Order.created_at >= start_dt)
+        label = f"ბოლო 7 დღე ({start_dt.strftime('%d.%m')} - {now.strftime('%d.%m.%Y')})"
+    elif period == 'month':
+        start_dt = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        query = query.filter(Order.created_at >= start_dt)
+        label = f"მიმდინარე თვე ({now.strftime('%m.%Y')})"
+    elif period == 'custom' and date_from_str and date_to_str:
+        try:
+            d_from = datetime.strptime(date_from_str, '%Y-%m-%d').replace(hour=0, minute=0, second=0)
+            d_to = datetime.strptime(date_to_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+            query = query.filter(Order.created_at >= d_from, Order.created_at <= d_to)
+            label = f"{d_from.strftime('%d.%m.%Y')} - {d_to.strftime('%d.%m.%Y')}"
+        except ValueError:
+            period = 'all'
+            label = "ყველა პერიოდი"
+    else:
+        period = 'all'
+        label = "ყველა პერიოდი"
+
+    filtered_orders = query.order_by(Order.created_at.desc()).all()
+
+    products_map = {p.id: p for p in Product.query.all()}
+    product_sales = {}
+    total_revenue = 0.0
+    total_subtotal = 0.0
+    total_discounts = 0.0
+    total_shipping = 0.0
+
+    for o in filtered_orders:
+        total_revenue += float(o.total_price or 0)
+        total_subtotal += float(o.subtotal or 0)
+        total_discounts += float(o.discount_amount or 0) + float(o.bonus_used or 0)
+        total_shipping += float(o.shipping_fee or 0)
+
+        if o.items_json:
+            try:
+                items_dict = json.loads(o.items_json)
+                for pid_str, qty in items_dict.items():
+                    pid = int(pid_str)
+                    qty = int(qty)
+                    prod = products_map.get(pid)
+                    title = prod.title if prod else f"პროდუქტი #{pid}"
+                    unit_price = float(prod.price) if prod else 0.0
+
+                    if title not in product_sales:
+                        product_sales[title] = {
+                            'title': title,
+                            'qty': 0,
+                            'unit_price': unit_price,
+                            'total_amount': 0.0
+                        }
+                    product_sales[title]['qty'] += qty
+                    product_sales[title]['total_amount'] = round(product_sales[title]['qty'] * unit_price, 2)
+            except Exception:
+                pass
+
+    sales_list = sorted(product_sales.values(), key=lambda x: x['qty'], reverse=True)
+
+    return {
+        'period': period,
+        'label': label,
+        'orders_count': len(filtered_orders),
+        'total_units': sum(item['qty'] for item in sales_list),
+        'total_subtotal': round(total_subtotal, 2),
+        'total_discounts': round(total_discounts, 2),
+        'total_shipping': round(total_shipping, 2),
+        'total_revenue': round(total_revenue, 2),
+        'sales_list': sales_list
+    }
+
+
 @main.route('/admin')
 @login_required
 @admin_required
 def admin_panel():
+    period = request.args.get('period', 'month')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    fin_summary = filter_orders_by_period(period, date_from, date_to)
+
     products = Product.query.order_by(Product.category.asc(), Product.id.asc()).all()
     orders = Order.query.order_by(Order.created_at.desc()).all()
     users_count = User.query.count()
@@ -626,9 +754,142 @@ def admin_panel():
         users_count=users_count,
         total_revenue=round(total_revenue, 2),
         kitchen_summary=kitchen_summary,
-        active_orders_count=len(active_orders)
+        active_orders_count=len(active_orders),
+        fin_summary=fin_summary,
+        date_from=date_from,
+        date_to=date_to
     )
 
+
+@main.route('/admin/export-finance-excel')
+@login_required
+@admin_required
+def export_finance_excel():
+    period = request.args.get('period', 'month')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    fin = filter_orders_by_period(period, date_from, date_to)
+
+    wb = openpyxl.Workbook()
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="9B2C2C", end_color="9B2C2C", fill_type="solid")
+    total_font = Font(bold=True, size=11)
+    total_fill = PatternFill(start_color="F3F4F6", end_color="F3F4F6", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin', color='D1D5DB'),
+        right=Side(style='thin', color='D1D5DB'),
+        top=Side(style='thin', color='D1D5DB'),
+        bottom=Side(style='thin', color='D1D5DB')
+    )
+
+    ws1 = wb.active
+    ws1.title = "გაყიდული პროდუქტები"
+
+    ws1.append([f"ფინანსური რეპორტი — {fin['label']}"])
+    ws1['A1'].font = Font(bold=True, size=13)
+    ws1.append([])
+
+    headers1 = ["№", "პროდუქტის დასახელება", "გაყიდული რაოდენობა", "ერთეულის ფასი (₾)", "ჯამური ღირებულება (₾)"]
+    ws1.append(headers1)
+
+    for col_idx in range(1, len(headers1) + 1):
+        cell = ws1.cell(row=3, column=col_idx)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center" if col_idx != 2 else "left", vertical="center")
+        cell.border = thin_border
+
+    for idx, item in enumerate(fin['sales_list'], start=1):
+        row_num = 3 + idx
+        ws1.append([idx, item['title'], item['qty'], item['unit_price'], item['total_amount']])
+        for col_idx in range(1, 6):
+            c = ws1.cell(row=row_num, column=col_idx)
+            c.border = thin_border
+            if col_idx in (4, 5):
+                c.number_format = '#,##0.00'
+
+    last_data_row = 3 + len(fin['sales_list'])
+    total_row = last_data_row + 1
+    ws1.append([
+        "",
+        "სულ გაყიდული პროდუქცია:",
+        f"=SUM(C4:C{last_data_row})" if len(fin['sales_list']) > 0 else 0,
+        "",
+        f"=SUM(E4:E{last_data_row})" if len(fin['sales_list']) > 0 else 0
+    ])
+    for col_idx in range(1, 6):
+        c = ws1.cell(row=total_row, column=col_idx)
+        c.font = total_font
+        c.fill = total_fill
+        c.border = thin_border
+        if col_idx == 5:
+            c.number_format = '#,##0.00'
+
+    ws2 = wb.create_sheet(title="ფინანსური შეჯამება")
+    ws2.append(["მაჩვენებელი", "მნიშვნელობა"])
+    for col_idx in range(1, 3):
+        c = ws2.cell(row=1, column=col_idx)
+        c.font = header_font
+        c.fill = header_fill
+        c.border = thin_border
+
+    summary_rows = [
+        ("პერიოდი", fin['label']),
+        ("შეკვეთების რაოდენობა", fin['orders_count']),
+        ("გაყიდული შეკვრების ჯამი", fin['total_units']),
+        ("პროდუქციის საბაზისო ღირებულება (₾)", fin['total_subtotal']),
+        ("გამოყენებული ფასდაკლებები და ბონუსები (₾)", fin['total_discounts']),
+        ("მიტანის საფასური (₾)", fin['total_shipping']),
+        ("საბოლოო შემოსავალი (₾)", fin['total_revenue']),
+    ]
+    for r_idx, (k, v) in enumerate(summary_rows, start=2):
+        ws2.append([k, v])
+        ws2.cell(row=r_idx, column=1).border = thin_border
+        val_cell = ws2.cell(row=r_idx, column=2)
+        val_cell.border = thin_border
+        if isinstance(v, float):
+            val_cell.number_format = '#,##0.00'
+        if r_idx == len(summary_rows) + 1:
+            ws2.cell(row=r_idx, column=1).font = total_font
+            val_cell.font = total_font
+            ws2.cell(row=r_idx, column=1).fill = total_fill
+            val_cell.fill = total_fill
+
+    for ws in (ws1, ws2):
+        for col in ws.columns:
+            max_len = max((len(str(cell.value or "")) for cell in col), default=10)
+            ws.column_dimensions[col[0].column_letter].width = max_len + 5
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"saxluri_gemo_finansebi_{period}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@main.route('/admin/product/quick-update/<int:product_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_quick_update_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    new_price = request.form.get('price', '').strip()
+    new_stock = request.form.get('stock_qty', '').strip()
+
+    if new_price:
+        product.price = round(float(new_price), 2)
+    if new_stock.isdigit():
+        product.stock_qty = int(new_stock)
+        product.in_stock = product.stock_qty > 0
+
+    db.session.commit()
+    flash(f'„{product.title}“ განახლდა (ფასი: {product.price:.2f} ₾, მარაგი: {product.stock_qty}).', 'success')
+    return redirect(url_for('main.admin_panel'))
 
 @main.route('/admin/order/<int:order_id>/print')
 @login_required
@@ -700,6 +961,23 @@ def admin_set_stock(product_id):
     else:
         flash(f'„{product.title}“ მოინიშნა როგორც ამოწურული (0).', 'info')
 
+    return redirect(url_for('main.admin_panel'))
+
+
+@main.route('/admin/product/<int:product_id>/price', methods=['POST'])
+@login_required
+def admin_set_price(product_id):
+    if not current_user.is_admin:
+        abort(403)
+    product = Product.query.get_or_404(product_id)
+    try:
+        new_price = float(request.form.get('price', 0))
+        if new_price >= 0:
+            product.price = round(new_price, 2)
+            db.session.commit()
+            flash(f'„{product.title}“-ის ფასი განახლდა: {product.price:.2f} ₾', 'success')
+    except ValueError:
+        flash('არასწორი ფასის ფორმატი.', 'danger')
     return redirect(url_for('main.admin_panel'))
 
 
@@ -835,24 +1113,25 @@ def admin_update_order(order_id):
 # --- 8. შეკვეთის სტატუსის შემოწმება ---
 @main.route('/track-order', methods=['GET', 'POST'])
 def track_order():
-    order = None
+    orders = []
     searched = False
     if request.method == 'POST':
+        order_id_raw = request.form.get('order_id', '').strip().lstrip('#').strip()
+        phone_raw = request.form.get('phone', '').strip()
         searched = True
-        order_id_raw = request.form.get('order_id', '').strip().replace('#', '')
-        phone = request.form.get('phone', '').strip()
 
-        if order_id_raw.isdigit() and phone:
-            found = Order.query.get(int(order_id_raw))
-            clean_input = phone.replace(' ', '')
-            if found and (clean_input in found.phone.replace(' ', '') or found.phone.replace(' ', '') == clean_input):
-                order = found
+        # ვტოვებთ მხოლოდ ბოლო 9 ციფრს (რომ +995, გამოტოვებები ან ტირეები არ უშლიდეს ხელს)
+        clean_digits = ''.join(ch for ch in phone_raw if ch.isdigit())[-9:]
 
-        if not order:
-            flash('მითითებული ნომრითა და ტელეფონით შეკვეთა ვერ მოიძებნა.', 'warning')
+        if clean_digits:
+            all_orders = Order.query.order_by(Order.created_at.desc()).all()
+            for o in all_orders:
+                db_digits = ''.join(ch for ch in (o.phone or '') if ch.isdigit())[-9:]
+                if db_digits == clean_digits:
+                    if not order_id_raw or (order_id_raw.isdigit() and o.id == int(order_id_raw)):
+                        orders.append(o)
 
-    return render_template('track_order.html', order=order, searched=searched)
-
+    return render_template('track_order.html', orders=orders, searched=searched)
 
 # --- 9. საბითუმო / B2B შეთავაზება ---
 @main.route('/wholesale', methods=['GET', 'POST'])

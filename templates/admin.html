@@ -1,139 +1,127 @@
-{% extends "base.html" %}
-{% block title %}ადმინ პანელი — სახლური გემო{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}ადმინ-პანელი — სახლური გემო{% endblock %}
+
 {% block content %}
-
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-    <h2 class="fw-bold mb-0">ადმინისტრატორის პანელი</h2>
-    <div class="d-flex gap-2">
-        <a href="{{ url_for('main.admin_export_orders') }}" class="btn btn-outline-success">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel / CSV ექსპორტი
-        </a>
-        <a href="{{ url_for('main.admin_add_product') }}" class="btn btn-brand">
-            <i class="bi bi-plus-lg me-1"></i>ახალი პროდუქტის დამატება
-        </a>
-    </div>
+<div class="section-header">
+    <h1 class="section-title">ადმინ-პანელი</h1>
+    <a href="{{ url_for('main.home') }}" class="btn btn-outline btn-sm">← საიტზე დაბრუნება</a>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="bg-white border rounded-4 p-3">
-            <small class="text-muted">სულ შეკვეთები</small>
-            <h3 class="fw-bold mb-0">{{ orders|length }}</h3>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="bg-white border rounded-4 p-3">
-            <small class="text-muted">ჯამური ბრუნვა</small>
-            <h3 class="fw-bold text-success mb-0">{{ "%.2f"|format(total_revenue) }} ₾</h3>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="bg-white border rounded-4 p-3">
-            <small class="text-muted">მომხმარებლები</small>
-            <h3 class="fw-bold mb-0">{{ users_count }}</h3>
-        </div>
-    </div>
-</div>
-
-{% if kitchen_summary %}
-<div class="bg-white border border-warning rounded-4 p-4 mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0"><i class="bi bi-fire text-danger me-2"></i>სამზარეულოს შემაჯამებელი სია ({{ active_orders_count }} აქტიური შეკვეთა)</h5>
-        <span class="badge bg-warning text-dark">მოსამზადებელია</span>
-    </div>
-    <div class="row g-2">
-        {% for item in kitchen_summary %}
-        <div class="col-sm-6 col-md-4 col-lg-3">
-            <div class="border rounded-3 p-2 px-3 bg-light d-flex justify-content-between align-items-center">
-                <span class="small fw-semibold">{{ item.title }}</span>
-                <span class="badge bg-dark">{{ item.qty }} × {{ item.unit }}</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-<div class="bg-white border rounded-4 p-4 mb-5">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+<!-- 1. ფინანსური ანალიტიკა და ექსელში ექსპორტი -->
+<div class="card-box" style="margin-bottom: 24px; border-left: 4px solid var(--accent-green);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
         <div>
-            <h5 class="fw-bold mb-0">მენიუ და მარაგების სწრაფი მართვა ({{ products|length }})</h5>
-            <small class="text-muted">ჩაწერეთ რაოდენობა ან დააჭირეთ „+10“ დამატებას. 0-ზე ჩამოსვლისას პროდუქტი ავტომატურად მოინიშნება როგორც ამოწურული.</small>
+            <h2 style="font-size: 1.2rem; font-weight: 800;">ფინანსური რეპორტი — {{ fin_summary.label }}</h2>
+            <p style="font-size: 0.84rem; color: var(--text-muted);">გაყიდული პროდუქტების რაოდენობა და შემოსავალი (პერსონალური მონაცემების გარეშე)</p>
+        </div>
+
+        <a href="{{ url_for('main.export_finance_excel', period=fin_summary.period, date_from=date_from, date_to=date_to) }}"
+           class="btn btn-primary btn-sm" style="background: var(--accent-green);">
+            ექსელში გადატანა (.xlsx)
+        </a>
+    </div>
+
+    <!-- სწრაფი ფილტრები: დღეს / კვირა / თვე / სულ + თარიღები -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('main.admin_panel', period='today') }}"
+               class="btn btn-sm {{ 'btn-primary' if fin_summary.period == 'today' else 'btn-outline' }}">დღეს</a>
+            <a href="{{ url_for('main.admin_panel', period='week') }}"
+               class="btn btn-sm {{ 'btn-primary' if fin_summary.period == 'week' else 'btn-outline' }}">ბოლო 7 დღე</a>
+            <a href="{{ url_for('main.admin_panel', period='month') }}"
+               class="btn btn-sm {{ 'btn-primary' if fin_summary.period == 'month' else 'btn-outline' }}">მიმდინარე თვე</a>
+            <a href="{{ url_for('main.admin_panel', period='all') }}"
+               class="btn btn-sm {{ 'btn-primary' if fin_summary.period == 'all' else 'btn-outline' }}">სულ</a>
+        </div>
+
+        <form method="GET" action="{{ url_for('main.admin_panel') }}" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <input type="hidden" name="period" value="custom">
+            <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="padding: 6px 10px; font-size: 0.85rem; width: auto;">
+            <span>—</span>
+            <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="padding: 6px 10px; font-size: 0.85rem; width: auto;">
+            <button type="submit" class="btn btn-outline btn-sm">გაფილტვრა</button>
+        </form>
+    </div>
+
+    <!-- შემაჯამებელი ციფრები -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px;">
+        <div style="background: var(--bg-main); padding: 12px 14px; border-radius: 10px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">შეკვეთები</div>
+            <div style="font-size: 1.35rem; font-weight: 800;">{{ fin_summary.orders_count }}</div>
+        </div>
+        <div style="background: var(--bg-main); padding: 12px 14px; border-radius: 10px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">გაყიდული შეკვრები</div>
+            <div style="font-size: 1.35rem; font-weight: 800;">{{ fin_summary.total_units }}</div>
+        </div>
+        <div style="background: var(--bg-main); padding: 12px 14px; border-radius: 10px;">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">ფასდაკლებები / ბონუსი</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #B91C1C;">-{{ "%.2f"|format(fin_summary.total_discounts) }} ₾</div>
+        </div>
+        <div style="background: var(--accent-green-soft); padding: 12px 14px; border-radius: 10px; border: 1px solid #BCE6CD;">
+            <div style="font-size: 0.8rem; color: var(--accent-green); font-weight: 700;">საბოლოო შემოსავალი</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: var(--accent-green);">{{ "%.2f"|format(fin_summary.total_revenue) }} ₾</div>
         </div>
     </div>
 
+    <!-- პროდუქტების ჩაშლა ეკრანზე -->
+    {% if fin_summary.sales_list %}
     <div class="table-responsive">
-        <table class="table align-middle small">
+        <table class="admin-table">
             <thead>
                 <tr>
-                    <th>ფოტო</th>
-                    <th>დასახელება</th>
-                    <th>ფასი</th>
-                    <th>სტატუსი</th>
-                    <th style="min-width: 260px;">მარაგის რაოდენობა (1 კლიკით)</th>
-                    <th>მოქმედება</th>
+                    <th>პროდუქტის დასახელება</th>
+                    <th>გაყიდული რაოდენობა</th>
+                    <th>ერთეულის ფასი</th>
+                    <th>ჯამური ღირებულება</th>
                 </tr>
             </thead>
             <tbody>
-                {% for p in products %}
-                <tr class="{{ 'table-light' if not p.in_stock else '' }}">
-                    <td><img src="{{ p.image_url }}" class="rounded-2 border" style="width: 48px; height: 48px; object-fit: cover;"></td>
-                    <td>
-                        <div class="fw-bold">{{ p.title }}</div>
-                        <span class="text-muted">{{ p.category }} • {{ p.unit }}</span>
-                    </td>
-                    <td class="fw-bold">{{ "%.2f"|format(p.price) }} ₾</td>
-                    <td>
-                        {% if p.in_stock and (p.stock_qty or 0) > 0 %}
-                        <span class="badge bg-success rounded-pill px-3 py-2">მარაგშია ({{ p.stock_qty }})</span>
-                        {% else %}
-                        <span class="badge bg-danger rounded-pill px-3 py-2">აღარ გვაქვს (0)</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-1">
-                            <form method="POST" action="{{ url_for('main.admin_set_stock', product_id=p.id) }}" class="d-flex gap-1">
-                                <input type="number" name="stock_qty" value="{{ p.stock_qty or 0 }}" min="0" max="500"
-                                       class="form-control form-control-sm text-center fw-bold" style="width: 72px;">
-                                <button type="submit" class="btn btn-sm btn-dark">შენახვა</button>
-                            </form>
-                            <form method="POST" action="{{ url_for('main.admin_set_stock', product_id=p.id) }}">
-                                <input type="hidden" name="quick_add" value="10">
-                                <button type="submit" class="btn btn-sm btn-outline-success" title="10 პორციის დამატება">+10</button>
-                            </form>
-                            {% if p.in_stock %}
-                            <form method="POST" action="{{ url_for('main.admin_set_stock', product_id=p.id) }}">
-                                <input type="hidden" name="stock_qty" value="0">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="მარაგის განულება">0</button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td class="d-flex gap-2">
-                        <a href="{{ url_for('main.admin_edit_product', product_id=p.id) }}" class="btn btn-sm btn-outline-secondary">რედაქტირება</a>
-                        <form method="POST" action="{{ url_for('main.admin_delete_product', product_id=p.id) }}" onsubmit="return confirm('წავშალოთ პროდუქტი?');">
-                            <button class="btn btn-sm btn-outline-danger">წაშლა</button>
-                        </form>
-                    </td>
+                {% for item in fin_summary.sales_list %}
+                <tr>
+                    <td><strong>{{ item.title }}</strong></td>
+                    <td>{{ item.qty }}</td>
+                    <td>{{ "%.2f"|format(item.unit_price) }} ₾</td>
+                    <td><strong>{{ "%.2f"|format(item.total_amount) }} ₾</strong></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% else %}
+        <p style="font-size: 0.88rem; color: var(--text-muted);">არჩეულ პერიოდში გაყიდვები არ ფიქსირდება.</p>
+    {% endif %}
 </div>
 
-<div class="bg-white border rounded-4 p-4">
-    <h5 class="fw-bold mb-3">შემოსული შეკვეთები</h5>
+<!-- 2. სამზარეულოს ჯამი (მიმდინარე შეკვეთები) -->
+{% if kitchen_prep %}
+<div class="card-box" style="margin-bottom: 24px; background: #FFFBEB; border-color: #FDE68A;">
+    <h3 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; color: #92400E;">
+        სამზარეულოში მოსამზადებელი ჯამი (აქტიური შეკვეთები)
+    </h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+        {% for title, qty in kitchen_prep.items() %}
+        <span style="background: #fff; border: 1px solid #FCD34D; padding: 6px 12px; border-radius: 8px; font-size: 0.9rem;">
+            {{ title }}: <strong>{{ qty }} შეკვრა</strong>
+        </span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- 3. შემოსული შეკვეთები -->
+<div class="card-box" style="margin-bottom: 24px;">
+    <h3 style="margin-bottom: 14px;">შეკვეთების მართვა ({{ orders|length }})</h3>
+    {% if orders %}
     <div class="table-responsive">
-        <table class="table align-middle small">
+        <table class="admin-table">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>კლიენტი / ტელეფონი</th>
-                    <th>მისამართი / დრო</th>
+                    <th>კლიენტი / მისამართი</th>
                     <th>პროდუქტები</th>
-                    <th>თანხა</th>
                     <th>გადახდა</th>
+                    <th>ჯამი</th>
                     <th>სტატუსი</th>
                     <th>ქვითარი</th>
                 </tr>
@@ -141,45 +129,118 @@
             <tbody>
                 {% for o in orders %}
                 <tr>
-                    <td><strong>#{{ o.id }}</strong></td>
-                    <td>{{ o.customer_name }}<br><span class="text-muted">{{ o.phone }}</span></td>
                     <td>
-                        {{ o.address }}
-                        {% if o.delivery_slot %}<br><span class="badge bg-light text-dark border mt-1">{{ o.delivery_slot }}</span>{% endif %}
+                        <strong>#{{ o.id }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ o.created_at.strftime('%d.%m %H:%M') }}</div>
                     </td>
-                    <td><pre class="mb-0" style="font-family: inherit;">{{ o.items_summary }}</pre></td>
-                    <td class="fw-bold">{{ "%.2f"|format(o.total_price) }} ₾</td>
-                    <td>
-                        {% if o.receipt_image %}
-                        <a href="{{ url_for('static', filename='uploads/' + o.receipt_image) }}" target="_blank" class="btn btn-sm btn-outline-primary">სქრინი</a>
-                        {% elif o.payment_method == 'b2b_inquiry' %}
-                        <span class="badge bg-info text-dark">B2B მოთხოვნა</span>
+                    <td style="font-size: 0.86rem;">
+                        <strong>{{ o.customer_name }}</strong> • {{ o.phone }}<br>
+                        <span style="color: var(--text-muted);">{{ o.address }}</span><br>
+                        <span style="font-size: 0.78rem; color: var(--primary);">{{ o.delivery_slot }}</span>
+                        {% if o.notes %}<div style="font-size: 0.78rem; color: #92400E;">შენიშვნა: {{ o.notes }}</div>{% endif %}
+                    </td>
+                    <td style="white-space: pre-line; font-size: 0.82rem;">{{ o.items_summary }}</td>
+                    <td style="font-size: 0.82rem;">
+                        {% if o.payment_method == 'transfer' %}
+                            <span style="color: var(--accent-green); font-weight: 700;">გადარიცხვა</span>
+                            {% if o.receipt_image %}
+                                <br><a href="{{ url_for('static', filename='uploads/' + o.receipt_image) }}" target="_blank" style="text-decoration: underline; font-size: 0.78rem;">ქვითრის ნახვა</a>
+                            {% endif %}
                         {% else %}
-                        <span class="badge bg-light text-dark border">ადგილზე</span>
+                            ადგილზე
                         {% endif %}
                     </td>
+                    <td style="white-space: nowrap;"><strong>{{ "%.2f"|format(o.total_price) }} ₾</strong></td>
                     <td>
-                        <form method="POST" action="{{ url_for('main.admin_update_order', order_id=o.id) }}">
-                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="pending" {% if o.status=='pending' %}selected{% endif %}>ახალი</option>
-                                <option value="preparing" {% if o.status=='preparing' %}selected{% endif %}>მზადდება</option>
-                                <option value="delivered" {% if o.status=='delivered' %}selected{% endif %}>მიტანილია</option>
-                                <option value="cancelled" {% if o.status=='cancelled' %}selected{% endif %}>გაუქმებული</option>
+                       <form method="POST" action="{{ url_for('main.admin_update_order', order_id=o.id) }}" style="display: flex; gap: 4px;">
+                            <select name="status" class="form-control" style="padding: 4px 8px; font-size: 0.82rem; width: auto;" onchange="this.form.submit()">
+                                <option value="pending" {% if o.status == 'pending' %}selected{% endif %}>ახალი</option>
+                                <option value="preparing" {% if o.status == 'preparing' %}selected{% endif %}>მზადდება</option>
+                                <option value="delivered" {% if o.status == 'delivered' %}selected{% endif %}>მიტანილია</option>
+                                <option value="cancelled" {% if o.status == 'cancelled' %}selected{% endif %}>გაუქმებული</option>
                             </select>
                         </form>
                     </td>
                     <td>
-                        <a href="{{ url_for('main.admin_print_order', order_id=o.id) }}" target="_blank" class="btn btn-sm btn-outline-dark" title="დაბეჭდვა">
-                            <i class="bi bi-printer"></i>
-                        </a>
+                        <a href="{{ url_for('main.admin_print_order', order_id=o.id) }}" target="_blank" class="btn btn-outline btn-sm">ბეჭდვა</a>
                     </td>
                 </tr>
-                {% else %}
-                <tr><td colspan="8" class="text-center text-muted py-3">შეკვეთები ჯერ არ არის.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p style="color: var(--text-muted);">შეკვეთები ჯერ არ შემოსულა.</p>
+    {% endif %}
+</div>
+
+<!-- 4. პროდუქტების მართვა და ახლის დამატება -->
+<div class="card-box">
+    <h3 style="margin-bottom: 16px;">მენიუს და მარაგების მართვა</h3>
+
+    <!-- ახალი პროდუქტის დამატების ფორმა -->
+    <form method="POST" action="{{ url_for('main.admin_add_product') }}" enctype="multipart/form-data"
+          style="background: var(--bg-main); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+        <div style="font-weight: 700; margin-bottom: 12px;">+ ახალი პროდუქტის დამატება</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px;">
+            <input type="text" name="title" required class="form-control" placeholder="დასახელება (მაგ: ქალაქური ხინკალი 20 ც)">
+            <select name="category" class="form-control">
+                <option value="ხინკალი">ხინკალი</option>
+                <option value="პელმენი და ვარენიკი">პელმენი და ვარენიკი</option>
+                <option value="ბლინები და კატლეტი">ბლინები და კატლეტი</option>
+                <option value="სამარხვო">სამარხვო</option>
+            </select>
+            <input type="text" name="weight_info" class="form-control" placeholder="წონა/რაოდენობა (მაგ: 20 ცალი / 1 კგ)">
+            <input type="number" step="0.01" name="price" required class="form-control" placeholder="ფასი (₾)">
+            <input type="number" name="stock_qty" value="20" required class="form-control" placeholder="მარაგი (შეკვრა)">
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="description" class="form-control" placeholder="შემადგენლობა / მოკლე აღწერა" style="flex: 1; min-width: 220px;">
+            <input type="file" name="image" accept="image/*" class="form-control" style="width: auto;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.86rem; font-weight: 600;">
+                <input type="checkbox" name="is_fasting"> სამარხვო
+            </label>
+            <button type="submit" class="btn btn-primary btn-sm">დამატება</button>
+        </div>
+    </form>
+
+    <!-- არსებული პროდუქტების ცხრილი (ფასისა და მარაგის სწრაფი შეცვლით) -->
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>პროდუქტი</th>
+                    <th>კატეგორია</th>
+                    <th>ფასი (₾) და მარაგი</th>
+                    <th>წაშლა</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td>
+                        <strong>{{ p.title }}</strong>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ p.weight_info }}</div>
+                    </td>
+                    <td>{{ p.category }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('main.admin_quick_update_product', product_id=p.id) }}" style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" step="0.01" name="price" value="{{ '%.2f'|format(p.price) }}" class="form-control" style="width: 85px; padding: 4px 8px;">
+                            <span>₾</span>
+                            <input type="number" name="stock_qty" value="{{ p.stock_qty or 0 }}" class="form-control" style="width: 75px; padding: 4px 8px;">
+                            <span>ც</span>
+                            <button type="submit" class="btn btn-outline btn-sm">შენახვა</button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('main.admin_delete_product', product_id=p.id) }}" onsubmit="return confirm('ნამდვილად გსურთ წაშლა?');">
+                            <button type="submit" class="btn btn-outline btn-sm" style="color: #B91C1C;">წაშლა</button>
+                        </form>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-
 {% endblock %}

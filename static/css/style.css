@@ -1,327 +1,803 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg-stone: #F7F4EF;
-    --surface: #FFFFFF;
-    --surface-warm: #EFE9E0;
-    --terracotta: #9E3B24;
-    --terracotta-hover: #7E2D1A;
-    --accent: #9E3B24;
-    --olive: #3B4D3B;
-    --charcoal: #1C1917;
-    --muted: #6C655F;
-    --border: #E5DDD2;
-    --radius-lg: 18px;
+    --bg-main: #FAF7F2;
+    --bg-card: #FFFFFF;
+    --text-dark: #1F1D1A;
+    --text-muted: #6B655E;
+    --primary: #9E3422;
+    --primary-hover: #7E2617;
+    --primary-soft: #FDF2F0;
+    --accent-green: #1E7E48;
+    --accent-green-soft: #EAF7EF;
+    --accent-amber: #C27803;
+    --accent-amber-soft: #FEF6E7;
+    --border-color: #EAE3D9;
+    --shadow-sm: 0 2px 8px rgba(31, 29, 26, 0.04);
+    --shadow-md: 0 8px 24px rgba(31, 29, 26, 0.07);
     --radius-md: 12px;
+    --radius-lg: 16px;
 }
 
 * {
-    font-family: 'Noto Sans Georgian', -apple-system, BlinkMacSystemFont, sans-serif;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    background-color: var(--bg-stone);
-    color: var(--charcoal);
-    min-height: 100vh;
+    font-family: 'Noto Sans Georgian', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    line-height: 1.55;
     display: flex;
     flex-direction: column;
-    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
 }
 
-.top-strip {
-    background-color: var(--charcoal);
-    color: #E7E2DC;
-    font-size: 0.8rem;
-    letter-spacing: 0.2px;
-}
-
-.navbar-editorial {
-    background-color: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-}
-
-.brand-mark {
-    font-weight: 800;
-    font-size: 1.35rem;
-    color: var(--charcoal) !important;
-    letter-spacing: -0.4px;
+a {
     text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
 }
 
-.brand-mark span {
-    color: var(--terracotta);
+.container {
+    width: 100%;
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 0 18px;
 }
 
-.nav-link-clean {
-    color: var(--charcoal) !important;
-    font-weight: 500;
-    font-size: 0.94rem;
-    padding: 0.5rem 0.9rem !important;
-    transition: color 0.2s;
+/* --- ნავიგაცია --- */
+.navbar {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: var(--shadow-sm);
 }
 
-.nav-link-clean:hover {
-    color: var(--terracotta) !important;
+.nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+    gap: 16px;
 }
 
-.hero-editorial {
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 20px 45px rgba(28, 25, 23, 0.05);
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: -0.02em;
 }
 
-.hero-eyebrow {
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 1.4px;
-    color: var(--terracotta);
+.brand-sub {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: block;
+    line-height: 1;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-link {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.nav-link:hover {
+    background: var(--bg-main);
+    color: var(--primary);
+}
+
+.nav-link-highlight {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cart-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-}
-
-.hero-eyebrow::before {
-    content: "";
-    width: 24px;
-    height: 1.5px;
-    background-color: var(--terracotta);
-}
-
-.hero-title {
-    font-weight: 800;
-    font-size: clamp(1.85rem, 3.2vw, 2.75rem);
-    line-height: 1.22;
-    color: var(--charcoal);
-    letter-spacing: -0.6px;
-}
-
-.hero-photo-col {
-    position: relative;
-    min-height: 390px;
-}
-
-.hero-photo-col img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.hero-floating-card {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(8px);
-    padding: 14px 18px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.6);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-}
-
-.btn-brand {
-    background-color: var(--terracotta);
-    border: 1px solid var(--terracotta);
-    color: #FFFFFF;
+    background: var(--text-dark);
+    color: #fff;
+    padding: 9px 15px;
+    border-radius: 10px;
     font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.cart-btn:hover {
+    background: var(--primary);
+}
+
+.cart-badge {
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    transition: transform 0.2s ease;
+}
+
+.cart-btn:hover .cart-badge {
+    background: #fff;
+    color: var(--primary);
+}
+
+.badge-bump {
+    transform: scale(1.3);
+}
+
+/* --- ღილაკები --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: inherit;
     font-size: 0.92rem;
-    border-radius: var(--radius-md);
-    padding: 0.62rem 1.3rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.btn-brand:hover {
-    background-color: var(--terracotta-hover);
-    border-color: var(--terracotta-hover);
-    color: #FFFFFF;
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
     transform: translateY(-1px);
 }
 
-.btn-outline-brand {
-    background-color: transparent;
-    border: 1.5px solid var(--charcoal);
-    color: var(--charcoal);
-    font-weight: 600;
-    font-size: 0.92rem;
-    border-radius: var(--radius-md);
-    padding: 0.6rem 1.25rem;
-    transition: all 0.2s ease;
+.btn-outline {
+    background: #fff;
+    border-color: var(--border-color);
+    color: var(--text-dark);
 }
 
-.btn-outline-brand:hover {
-    background-color: var(--charcoal);
-    color: #FFFFFF;
+.btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
-.pillar-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1.35rem 1.5rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    height: 100%;
+.btn-green {
+    background: var(--accent-green);
+    color: #fff;
 }
 
-.pillar-icon {
-    width: 42px;
-    height: 42px;
+.btn-green:hover {
+    background: #176639;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.83rem;
+    border-radius: 8px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* --- შეტყობინებები (Flash & Toast) --- */
+.flash-container {
+    margin-top: 16px;
+}
+
+.alert {
+    padding: 12px 16px;
     border-radius: 10px;
-    background-color: var(--surface-warm);
-    color: var(--terracotta);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+}
+
+.alert-success { background: var(--accent-green-soft); color: var(--accent-green); border-color: #BCE6CD; }
+.alert-danger { background: #FDECEC; color: #B91C1C; border-color: #F8C9C9; }
+.alert-warning { background: var(--accent-amber-soft); color: var(--accent-amber); border-color: #F6DFB0; }
+.alert-info { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text-dark);
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+    font-size: 0.92rem;
+    font-weight: 600;
+    z-index: 9999;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: all 0.28s ease;
 }
 
-/* კატეგორიების ღილაკები */
-.cat-tab,
-.category-pill {
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- მთავარი გვერდი (Hero & ფილტრები) --- */
+.hero-banner {
+    background: linear-gradient(135deg, #27221E 0%, #3E2720 100%);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    padding: 36px 32px;
+    margin: 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.hero-content {
+    max-width: 620px;
+}
+
+.hero-tag {
     display: inline-block;
-    padding: 8px 18px;
-    border-radius: 50px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--charcoal);
-    text-decoration: none;
-    font-size: 0.88rem;
+    background: rgba(255, 255, 255, 0.14);
+    color: #FDE68A;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+
+.hero-title {
+    font-size: 1.95rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 10px;
+}
+
+.hero-desc {
+    color: #E5DDD3;
+    font-size: 0.98rem;
+    margin-bottom: 20px;
+}
+
+.hero-perks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.perk-pill {
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ფილტრების პანელი */
+.filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.category-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.cat-pill {
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 0.86rem;
     font-weight: 600;
-    transition: all 0.18s ease;
+    background: var(--bg-main);
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
 }
 
-.cat-tab:hover,
-.category-pill:hover {
-    border-color: var(--charcoal);
-    background-color: var(--surface-warm);
-    color: var(--charcoal);
+.cat-pill:hover, .cat-pill.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
 }
 
-.cat-tab.active,
-.category-pill.active {
-    background-color: var(--terracotta);
-    border-color: var(--terracotta);
-    color: #FFFFFF;
+.cat-pill-fasting.active {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
 }
 
-/* პროდუქტის ბარათები */
-.dish-card,
+.search-box {
+    display: flex;
+    gap: 8px;
+    min-width: 250px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 9px 13px;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    background: #fff;
+    color: var(--text-dark);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* --- პროდუქტების ბადე და ბარათები --- */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 22px;
+    margin-bottom: 40px;
+}
+
 .product-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dish-card:hover,
 .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 32px rgba(28, 25, 23, 0.08);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
 }
 
-.dish-media {
-    position: relative;
-    height: 225px;
-    overflow: hidden;
-    background-color: var(--surface-warm);
-}
-
-.dish-media img,
 .product-img-wrap {
+    position: relative;
+    height: 195px;
+    background: #EFECE6;
+    overflow: hidden;
+}
+
+.product-img {
     width: 100%;
-    height: 225px;
+    height: 100%;
     object-fit: cover;
-    transition: transform 0.45s ease;
 }
 
-.dish-card:hover .dish-media img,
-.product-card:hover .product-img-wrap {
-    transform: scale(1.04);
-}
-
-.dish-badge,
-.unit-badge {
+.badges-top {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(28, 25, 23, 0.85);
-    backdrop-filter: blur(4px);
-    color: #FFFFFF;
-    font-size: 0.74rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    padding: 5px 12px;
-    border-radius: 50px;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+    pointer-events: none;
 }
 
-.btn-wishlist,
-.btn-like {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid var(--border);
-    color: var(--charcoal);
+.badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge-fasting { background: var(--accent-green); color: #fff; }
+.badge-standard { background: rgba(31, 29, 26, 0.82); color: #fff; }
+.badge-stock { background: #fff; color: var(--accent-green); box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+
+.product-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.product-cat {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+}
+
+.product-title {
+    font-size: 1.06rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    line-height: 1.35;
+}
+
+.product-title:hover {
+    color: var(--primary);
+}
+
+.product-meta-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.meta-chip {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.allergen-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+}
+
+.product-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.price-block {
+    display: flex;
+    flex-direction: column;
+}
+
+.price-main {
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+}
+
+.price-unit {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* --- ბარათები და სექციები (კალათა, ბოქსი, ადმინი) --- */
+.card-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 22px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 24px 0 18px;
+}
+
+.section-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+}
+
+/* კალათა */
+.cart-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 40px;
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.cart-item-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+}
+
+.cart-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: #EFECE6;
+}
+
+.qty-controls {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.btn-wishlist.liked {
-    color: #DC2626;
-    border-color: #FECACA;
-}
-
-.btn-wishlist:hover,
-.btn-like:hover {
-    transform: scale(1.08);
-}
-
-.dish-meta {
-    font-size: 0.78rem;
-    color: var(--muted);
-    font-weight: 500;
-}
-
-.dish-title {
+.qty-btn {
+    background: var(--bg-main);
+    border: none;
+    width: 32px;
+    height: 32px;
     font-weight: 700;
-    font-size: 1.05rem;
-    line-height: 1.35;
-    color: var(--charcoal);
-    text-decoration: none;
+    cursor: pointer;
+    font-size: 1rem;
 }
 
-.dish-title:hover {
-    color: var(--terracotta);
+.qty-btn:hover {
+    background: var(--border-color);
 }
 
-.dish-price,
-.price-tag {
-    font-size: 1.25rem;
+.qty-val {
+    padding: 0 12px;
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.summary-total {
+    border-top: 2px solid var(--border-color);
+    padding-top: 12px;
+    margin-top: 12px;
+    font-size: 1.2rem;
     font-weight: 800;
-    color: var(--terracotta);
+    color: var(--primary);
 }
 
-.qty-input,
-.box-qty-input {
-    border: 1px solid var(--border);
-    border-radius: 10px;
+/* --- ბოქსის კონსტრუქტორი (Live Bar) --- */
+.box-sticky-bar {
+    position: sticky;
+    bottom: 16px;
+    background: var(--text-dark);
+    color: #fff;
+    padding: 16px 22px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    z-index: 900;
+    margin-bottom: 30px;
+}
+
+.box-status-pill {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.box-status-pill.ready {
+    background: var(--accent-green);
+    color: #fff;
+}
+
+/* --- ადმინ პანელი --- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+
+.stat-label {
+    font-size: 0.84rem;
+    color: var(--text-muted);
     font-weight: 600;
 }
 
-.footer-editorial {
-    background-color: var(--charcoal);
-    color: #A8A29E;
+.stat-value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-table th {
+    text-align: left;
+    padding: 12px 10px;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-muted);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.row-in-stock {
+    background-color: #F7FCF9;
+}
+
+.row-out-stock {
+    background-color: #FAFAFA;
+    opacity: 0.82;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-in { background: var(--accent-green-soft); color: var(--accent-green); }
+.status-out { background: #EFECE6; color: var(--text-muted); }
+.status-pending { background: var(--accent-amber-soft); color: var(--accent-amber); }
+.status-preparing { background: #EFF6FF; color: #1D4ED8; }
+.status-delivered { background: var(--accent-green-soft); color: var(--accent-green); }
+.status-cancelled { background: #FDECEC; color: #B91C1C; }
+
+.stock-control-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.stock-input {
+    width: 68px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* --- Footer --- */
+.footer {
     margin-top: auto;
+    background: #1F1D1A;
+    color: #D6CFC7;
+    padding: 28px 0;
+    font-size: 0.88rem;
+}
+
+.footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+/* --- მობილური ადაპტაცია --- */
+@media (max-width: 860px) {
+    .cart-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .mobile-menu-bar {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 8px 18px;
+        background: #fff;
+        border-bottom: 1px solid var(--border-color);
+    }
+}
+
+@media (min-width: 861px) {
+    .mobile-menu-bar {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero-banner {
+        padding: 24px 20px;
+    }
+
+    .hero-title {
+        font-size: 1.5rem;
+    }
+
+    .cart-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .search-box {
+        width: 100%;
+    }
 }

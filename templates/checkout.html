@@ -1,121 +1,289 @@
-{% extends "base.html" %}
-{% block title %}შეკვეთის გაფორმება — სახლური გემო{% endblock %}
+{% extends 'base.html' %}
+
 {% block content %}
-
-<div class="row g-4">
-    <div class="col-lg-7">
-        <div class="bg-white border rounded-4 p-4">
-            <h4 class="fw-bold mb-4">მიტანისა და გადახდის დეტალები</h4>
-            <form method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">სახელი და გვარი *</label>
-                    <input type="text" name="customer_name" class="form-control rounded-3"
-                           value="{{ current_user.username if current_user.is_authenticated else '' }}" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">ტელეფონის ნომერი *</label>
-                    <input type="text" name="phone" class="form-control rounded-3" placeholder="5XX XX XX XX"
-                           value="{{ current_user.phone or '' if current_user.is_authenticated else '' }}" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">ზუსტი მისამართი (ქუჩა, კორპუსი, ბინა) *</label>
-                    <input type="text" name="address" class="form-control rounded-3"
-                           value="{{ current_user.address or '' if current_user.is_authenticated else '' }}" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">მიტანის სასურველი დრო *</label>
-                    <select name="delivery_slot" class="form-select rounded-3">
-                        {% for slot in delivery_slots %}
-                        <option value="{{ slot }}">{{ slot }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">კომენტარი კურიერისთვის</label>
-                    <textarea name="notes" rows="2" class="form-control rounded-3" placeholder="სადარბაზოს კოდი, სართული ან დამატებითი მითითება..."></textarea>
-                </div>
-
-                {% if is_first_order and subtotal >= 20 %}
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">მეგობრის მოსაწვევი კოდი (არასავალდებულო — გაკლდებათ 5 ₾)</label>
-                    <input type="text" name="referral_code" class="form-control rounded-3 text-uppercase" placeholder="მაგ: ANDRIA5">
-                </div>
-                {% endif %}
-
-                {% if available_bonus > 0 %}
-                <div class="p-3 rounded-3 mb-4" style="background-color: #eef8f1; border: 1px solid #b7e1c4;">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="use_bonus" id="useBonusCheck" value="1">
-                        <label class="form-check-label fw-semibold text-success" for="useBonusCheck">
-                            ბონუს-ბალანსის გამოყენება (-{{ "%.2f"|format(available_bonus) }} ₾)
-                        </label>
-                    </div>
-                </div>
-                {% endif %}
-
-                <div class="mb-4">
-                    <label class="form-label small fw-semibold d-block mb-2">გადახდის მეთოდი</label>
-                    <div class="border rounded-3 p-3 mb-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="payCash" value="cash" checked>
-                            <label class="form-check-label fw-semibold" for="payCash">
-                                ადგილზე გადახდა (ბარათით ტერმინალზე ან ნაღდით)
-                            </label>
-                        </div>
-                    </div>
-                    <div class="border rounded-3 p-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="payTransfer" value="transfer">
-                            <label class="form-check-label fw-semibold" for="payTransfer">
-                                საბანკო გადარიცხვა (ქვითრის ატვირთვით)
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="receiptUploadSection" class="p-3 rounded-3 mb-4" style="display: none; background-color: var(--bg-stone); border: 1px solid var(--border);">
-                    <p class="small mb-2">
-                        <strong>ანგარიშის ნომერი (TBC / BOG):</strong> <code>GE00TB0000000000000000</code><br>
-                        გადარიცხვის შემდეგ ატვირთეთ ქვითრის სქრინი:
-                    </p>
-                    <input type="file" name="receipt" class="form-control rounded-3" accept="image/*">
-                </div>
-
-                <button type="submit" class="btn btn-brand btn-lg w-100">შეკვეთის დადასტურება ({{ "%.2f"|format(total_price) }} ₾)</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="col-lg-5">
-        <div class="bg-white border rounded-4 p-4">
-            <h5 class="fw-bold mb-3">თქვენი შეკვეთა</h5>
-            {% for item in items %}
-            <div class="d-flex justify-content-between small mb-2">
-                <span>{{ item.product.title }} × {{ item.quantity }}</span>
-                <strong>{{ "%.2f"|format(item.line_total) }} ₾</strong>
-            </div>
-            {% endfor %}
-            {% if box_discount > 0 %}
-            <div class="d-flex justify-content-between small text-success mb-2">
-                <span>ბოქსის ფასდაკლება (-10%):</span>
-                <strong>-{{ "%.2f"|format(box_discount) }} ₾</strong>
-            </div>
-            {% endif %}
-            <hr>
-            <div class="d-flex justify-content-between small mb-1">
-                <span>მიტანა:</span>
-                <span>{{ "უფასო" if shipping_fee == 0 else "%.2f ₾"|format(shipping_fee) }}</span>
-            </div>
-            <div class="d-flex justify-content-between fs-5 fw-bold mt-2">
-                <span>ჯამი:</span>
-                <span>{{ "%.2f"|format(total_price) }} ₾</span>
-            </div>
-        </div>
-    </div>
+<div class="section-header">
+    <h1 class="section-title">შეკვეთის გაფორმება</h1>
+    <a href="{{ url_for('main.cart') }}" class="btn btn-outline btn-sm">← კალათაში დაბრუნება</a>
 </div>
 
+<form method="POST" action="{{ url_for('main.checkout') }}" enctype="multipart/form-data" class="cart-layout">
+    <!-- მარცხენა სვეტი -->
+    <div class="card-box">
+        <h3 style="margin-bottom: 16px;">1. მიტანის მონაცემები</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div>
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">სახელი და გვარი *</label>
+                <input type="text" name="customer_name" required class="form-control"
+                       value="{{ current_user.username if current_user.is_authenticated else '' }}"
+                       placeholder="მაგ: გიორგი ბერიძე">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">ტელეფონის ნომერი *</label>
+                <input type="tel" name="phone" required class="form-control"
+                       value="{{ current_user.phone if (current_user.is_authenticated and current_user.phone) else '' }}"
+                       placeholder="5XX XX XX XX">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">ზუსტი მისამართი (უბანი, ქუჩა, კორპუსი, სართული) *</label>
+            <input type="text" name="address" required class="form-control"
+                   value="{{ current_user.address if (current_user.is_authenticated and current_user.address) else '' }}"
+                   placeholder="მაგ: საბურთალო, ყაზბეგის გამზ. 14, სადარბაზო 2">
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
+            <div>
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">მიტანის სასურველი დრო</label>
+                <select name="delivery_slot" class="form-control">
+                    {% for slot in delivery_slots %}
+                        <option value="{{ slot }}">{{ slot }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">დამატებითი კომენტარი</label>
+                <input type="text" name="notes" class="form-control" placeholder="მაგ: დომოფონის კოდი">
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+        <h3 style="margin-bottom: 14px;">2. გადახდის მეთოდი</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px;">
+            <label style="border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: var(--bg-main);">
+                <input type="radio" name="payment_method" value="cash" checked onchange="toggleTransferBox(false)">
+                <div>
+                    <div style="font-weight: 700;">ადგილზე გადახდა</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">ნაღდი ან ბარათით კურიერთან</div>
+                </div>
+            </label>
+
+            <label style="border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: var(--bg-main);">
+                <input type="radio" name="payment_method" value="transfer" onchange="toggleTransferBox(true)">
+                <div>
+                    <div style="font-weight: 700;">საბანკო გადარიცხვა</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">TBC / BOG ანგარიშზე + ქვითარი</div>
+                </div>
+            </label>
+        </div>
+
+        <!-- საბანკო რეკვიზიტები -->
+        <div id="transfer-details-box" style="display: none; background: var(--primary-soft); border: 1px solid #F3C6BE; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+            <div style="font-weight: 700; color: var(--primary); margin-bottom: 10px;">გადმორიცხეთ თანხა მითითებულ ანგარიშზე:</div>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; font-size: 0.9rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px 12px; border-radius: 8px;">
+                    <span><strong>TBC:</strong> <span id="iban-tbc">GE00TB0000000000000000</span></span>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copyIban('iban-tbc')">კოპირება</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px 12px; border-radius: 8px;">
+                    <span><strong>BOG:</strong> <span id="iban-bog">GE00BG0000000000000000</span></span>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copyIban('iban-bog')">კოპირება</button>
+                </div>
+            </div>
+            <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">ატვირთეთ გადახდის ქვითარი *</label>
+            <input type="file" name="receipt" id="receipt-file-input" accept="image/*" class="form-control">
+        </div>
+
+        <!-- რეფერალური კოდი და ბონუს-ქულები -->
+        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+        <h3 style="margin-bottom: 14px;">3. ფასდაკლება და ბონუს-ბალანსი</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+            {% if is_first_order %}
+            <div style="background: var(--bg-main); padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px;">რეფერალური კოდი (-5.00 ₾ პირველ შეკვეთაზე 20 ₾-დან)</label>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" name="referral_code" id="checkout-ref-input" value="{{ saved_ref_code or '' }}"
+                           class="form-control" placeholder="მაგ: ANDRIA15" style="text-transform: uppercase; font-weight: 700;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="verifyCheckoutReferral()">გამოყენება</button>
+                </div>
+                <div id="checkout-ref-status" style="font-size: 0.8rem; font-weight: 600; margin-top: 6px;"></div>
+            </div>
+            {% endif %}
+
+            {% if available_bonus > 0 %}
+            <div style="display: flex; align-items: center; background: var(--accent-green-soft); padding: 14px; border-radius: 10px; border: 1px solid #BCE6CD;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 700; color: var(--accent-green); font-size: 0.9rem;">
+                    <input type="checkbox" name="use_bonus" id="use-bonus-checkbox" onchange="recalcCheckoutTotal()">
+                    <span>დაგროვილი ბონუსის გამოყენება ({{ "%.2f"|format(available_bonus) }} ₾)</span>
+                </label>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- მარჯვენა სვეტი: დეტალური ჩაშლა (რატომ და რამდენი დააკლდა) -->
+    <div class="card-box">
+        <h3 style="margin-bottom: 14px;">შეკვეთის დეტალური ანგარიში</h3>
+
+        <div style="margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            {% for item in items %}
+            <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 6px;">
+                <span>{{ item.product.title }} × <strong>{{ item.quantity }}</strong></span>
+                <span>{{ "%.2f"|format(item.line_total) }} ₾</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="summary-row">
+            <span>პროდუქტების ღირებულება:</span>
+            <strong>{{ "%.2f"|format(subtotal) }} ₾</strong>
+        </div>
+
+        {% if box_discount > 0 %}
+        <div class="summary-row" style="color: var(--accent-green); background: var(--accent-green-soft); padding: 6px 10px; border-radius: 8px; font-size: 0.86rem;">
+            <span>საოჯახო ბოქსის ფასდაკლება (3+ სახეობა -10%):</span>
+            <strong>-{{ "%.2f"|format(box_discount) }} ₾</strong>
+        </div>
+        {% endif %}
+
+        <div class="summary-row" id="ref-deduct-row" style="display: none; color: var(--accent-green); background: var(--accent-green-soft); padding: 6px 10px; border-radius: 8px; font-size: 0.86rem;">
+            <span id="ref-deduct-label">რეფერალური ფასდაკლება:</span>
+            <strong>-5.00 ₾</strong>
+        </div>
+
+        <div class="summary-row" id="bonus-deduct-row" style="display: none; color: var(--accent-green); background: var(--accent-green-soft); padding: 6px 10px; border-radius: 8px; font-size: 0.86rem;">
+            <span>დაგროვილი ქეშბექ-ბონუსის გამოყენება:</span>
+            <strong id="bonus-deduct-val">-0.00 ₾</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>მიტანის საფასური:</span>
+            <strong>{% if shipping_fee == 0 %}უფასო (50 ₾+ შეკვეთაზე){% else %}{{ "%.2f"|format(shipping_fee) }} ₾{% endif %}</strong>
+        </div>
+
+        <div class="summary-row summary-total">
+            <span>საბოლოო გადასახდელი:</span>
+            <span id="checkout-final-price"
+                  data-base="{{ total_price }}"
+                  data-subtotal="{{ subtotal }}"
+                  data-bonus="{{ available_bonus }}">{{ "%.2f"|format(total_price) }} ₾</span>
+        </div>
+
+        <div id="total-saved-banner" style="display: none; text-align: center; font-size: 0.84rem; font-weight: 700; color: var(--accent-green); margin-top: 8px;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top: 16px; padding: 14px; font-size: 1rem;">
+            შეკვეთის დადასტურება
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let validRefDiscount = 0.0;
+let activeRefCode = '';
+
+function toggleTransferBox(isTransfer) {
+    const box = document.getElementById('transfer-details-box');
+    const fileInput = document.getElementById('receipt-file-input');
+    box.style.display = isTransfer ? 'block' : 'none';
+    if (fileInput) fileInput.required = isTransfer;
+}
+
+function copyIban(elementId) {
+    const text = document.getElementById(elementId).textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('ანგარიშის ნომერი დაკოპირდა: ' + text);
+    });
+}
+
+function verifyCheckoutReferral() {
+    const inp = document.getElementById('checkout-ref-input');
+    const statusEl = document.getElementById('checkout-ref-status');
+    const totalEl = document.getElementById('checkout-final-price');
+    if (!inp) return;
+
+    const code = inp.value.trim().toUpperCase();
+    const subtotal = parseFloat(totalEl.getAttribute('data-subtotal')) || 0;
+
+    if (!code) {
+        validRefDiscount = 0.0;
+        activeRefCode = '';
+        statusEl.textContent = '';
+        recalcCheckoutTotal();
+        return;
+    }
+
+    if (subtotal < 20.0) {
+        validRefDiscount = 0.0;
+        statusEl.style.color = '#B91C1C';
+        statusEl.textContent = '✕ რეფერალური კოდი მოქმედებს მინიმუმ 20.00 ₾-იან შეკვეთაზე.';
+        recalcCheckoutTotal();
+        return;
+    }
+
+    fetch('/api/check-referral?code=' + encodeURIComponent(code))
+        .then(res => res.json())
+        .then(data => {
+            if (data.valid) {
+                validRefDiscount = 5.0;
+                activeRefCode = code;
+                statusEl.style.color = 'var(--accent-green)';
+                statusEl.textContent = '✓ კოდი გააქტიურდა! დაგაკლდათ 5.00 ₾.';
+            } else {
+                validRefDiscount = 0.0;
+                activeRefCode = '';
+                statusEl.style.color = '#B91C1C';
+                statusEl.textContent = data.message || '✕ არასწორი კოდი';
+            }
+            recalcCheckoutTotal();
+        });
+}
+
+function recalcCheckoutTotal() {
+    const cb = document.getElementById('use-bonus-checkbox');
+    const totalEl = document.getElementById('checkout-final-price');
+    const refRow = document.getElementById('ref-deduct-row');
+    const refLabel = document.getElementById('ref-deduct-label');
+    const deductRow = document.getElementById('bonus-deduct-row');
+    const deductVal = document.getElementById('bonus-deduct-val');
+    const savedBanner = document.getElementById('total-saved-banner');
+
+    const baseTotal = parseFloat(totalEl.getAttribute('data-base')) || 0;
+    const availBonus = parseFloat(totalEl.getAttribute('data-bonus')) || 0;
+    const boxDiscount = {{ box_discount or 0 }};
+
+    let currentSum = Math.max(0, baseTotal - validRefDiscount);
+
+    if (validRefDiscount > 0) {
+        refRow.style.display = 'flex';
+        refLabel.textContent = `რეფერალური ფასდაკლება (კოდი: ${activeRefCode}):`;
+    } else {
+        refRow.style.display = 'none';
+    }
+
+    let bonusUsed = 0;
+    if (cb && cb.checked && availBonus > 0) {
+        bonusUsed = Math.min(currentSum, availBonus);
+        currentSum = Math.max(0, currentSum - bonusUsed);
+        deductRow.style.display = 'flex';
+        deductVal.textContent = '-' + bonusUsed.toFixed(2) + ' ₾';
+    } else {
+        deductRow.style.display = 'none';
+    }
+
+    totalEl.textContent = currentSum.toFixed(2) + ' ₾';
+
+    const totalSaved = boxDiscount + validRefDiscount + bonusUsed;
+    if (totalSaved > 0) {
+        savedBanner.style.display = 'block';
+        savedBanner.textContent = `ჯამში დაზოგეთ: ${totalSaved.toFixed(2)} ₾`;
+    } else {
+        savedBanner.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const inp = document.getElementById('checkout-ref-input');
+    if (inp && inp.value.trim() !== '') {
+        verifyCheckoutReferral();
+    }
+});
+</script>
 {% endblock %}

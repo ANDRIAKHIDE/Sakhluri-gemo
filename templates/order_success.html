@@ -1,13 +1,85 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="text-center py-5 bg-white rounded-4 shadow-sm mx-auto" style="max-width: 600px;">
+<div class="text-center py-5 bg-white rounded-4 shadow-sm mx-auto" style="max-width: 720px;">
     <div style="font-size: 4.5rem;">🎉</div>
     <h2 class="fw-bold mt-3">შეკვეთა #{{ order.id }} მიღებულია!</h2>
     <p class="text-muted px-4">მადლობა, <strong>{{ order.customer_name }}</strong>! ჩვენი ოპერატორი მალე დაგიკავშირდებათ ნომერზე <strong>{{ order.phone }}</strong>.</p>
+
+    <!-- შეკვეთის სტატუსის ქართული პროგრეს-ბარი -->
+    <div class="mx-4 my-4 p-3 rounded-4 border text-start" style="background: #FAFAFA;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <span class="fw-bold" style="font-size: 0.95rem;">შეკვეთის მიმდინარე სტატუსი</span>
+            <button type="button" onclick="window.location.reload();" class="btn btn-sm btn-outline-secondary" style="font-size: 0.78rem;">
+                ↻ სტატუსის განახლება
+            </button>
+        </div>
+
+        {% if order.status == 'cancelled' %}
+            <div class="p-3 rounded-3 text-center fw-bold" style="background: #FEF2F2; border: 1px solid #FECACA; color: #B91C1C;">
+                ✕ შეკვეთა გაუქმებულია
+            </div>
+        {% else %}
+            {% set status_order = ['pending', 'confirmed', 'preparing', 'on_the_way', 'delivered'] %}
+            {% set current_idx = status_order.index(order.status) if order.status in status_order else 0 %}
+
+            {% set steps = [
+                ('ლოდინის რეჟიმში', 'მიღებულია'),
+                ('დადასტურებულია', 'შემოწმდა'),
+                ('მზადდება', 'იფუთება'),
+                ('კურიერს მოაქვს', 'გზაშია'),
+                ('მიტანილია', 'ჩაბარდა')
+            ] %}
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 8px;">
+                {% for title, desc in steps %}
+                    {% set idx = loop.index0 %}
+                    {% set is_done = idx <= current_idx %}
+                    {% set is_current = idx == current_idx %}
+
+                    <div style="
+                        padding: 10px 8px;
+                        border-radius: 12px;
+                        border: 1.5px solid {{ '#198754' if is_done else '#DEE2E6' }};
+                        background: {{ '#E9F7EF' if is_current else ('#FFFFFF' if is_done else '#F8F9FA') }};
+                        opacity: {{ '1' if is_done else '0.55' }};
+                    ">
+                        <div class="d-flex align-items-center gap-1 mb-1">
+                            <span style="
+                                width: 20px; height: 20px; border-radius: 50%;
+                                display: inline-flex; align-items: center; justify-content: center;
+                                font-size: 0.72rem; font-weight: 800; flex-shrink: 0;
+                                background: {{ '#198754' if is_done else '#CED4DA' }};
+                                color: {{ '#FFFFFF' if is_done else '#495057' }};
+                            ">
+                                {% if idx < current_idx %}✓{% else %}{{ loop.index }}{% endif %}
+                            </span>
+                            <span style="font-size: 0.8rem; font-weight: 700; color: {{ '#157347' if is_done else '#212529' }}; line-height: 1.2;">
+                                {{ title }}
+                            </span>
+                        </div>
+                        <div class="text-muted" style="font-size: 0.72rem; padding-left: 24px;">
+                            {{ desc }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- შეკვეთის დეტალები -->
     <div class="bg-light rounded-4 p-3 mx-4 my-3 text-start small">
         <pre class="mb-2" style="font-family: inherit;">{{ order.items_summary }}</pre>
+        {% if order.delivery_slot %}
+            <div class="text-muted mb-1">მიტანის დრო: <strong>{{ order.delivery_slot }}</strong></div>
+        {% endif %}
         <strong>სულ გადასახდელი: {{ "%.2f"|format(order.total_price) }} ₾</strong>
     </div>
-    <a href="{{ url_for('main.home') }}" class="btn btn-terracotta px-4 mt-2">მთავარ გვერდზე დაბრუნება</a>
+
+    <div class="d-flex justify-content-center gap-2 flex-wrap px-4 mt-3">
+        <a href="{{ url_for('main.home') }}" class="btn btn-terracotta px-4">მთავარ გვერდზე დაბრუნება</a>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.profile') }}" class="btn btn-outline-secondary px-4">ჩემი შეკვეთები</a>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

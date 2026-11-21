@@ -1,29 +1,107 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}რეგისტრაცია — სახლური გემო{% endblock %}
+
 {% block content %}
-<div class="card border-0 shadow-sm rounded-4 p-4 mx-auto" style="max-width: 460px;">
-    <h3 class="fw-bold text-center mb-4">რეგისტრაცია</h3>
-    <form method="POST">
-        <div class="mb-3">
-            <label class="form-label">სახელი</label>
-            <input type="text" name="username" class="form-control rounded-3" required>
+<div style="max-width: 480px; margin: 40px auto 60px;">
+    <div class="card-box" style="padding: 32px 28px;">
+        <div style="text-align: center; margin-bottom: 22px;">
+            <span style="display: inline-block; background: var(--accent-green-soft); color: var(--accent-green); font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-bottom: 8px;">
+                5% ქეშბექი + 5 ₾ რეფერალური ბონუსი
+            </span>
+            <h1 style="font-size: 1.55rem; font-weight: 800; margin-bottom: 6px;">ანგარიშის შექმნა</h1>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">რეგისტრაციისთანავე მიიღებთ პირად რეფერალურ კოდს გასაზიარებლად</p>
         </div>
-        <div class="mb-3">
-            <label class="form-label">ელ-ფოსტა</label>
-            <input type="email" name="email" class="form-control rounded-3" required>
+
+        <form method="POST" action="{{ url_for('main.register') }}">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">სახელი / მომხმარებელი *</label>
+                <input type="text" name="username" required class="form-control" placeholder="მაგ: ანდრია" style="padding: 11px 14px;">
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">ელ-ფოსტა *</label>
+                <input type="email" name="email" required class="form-control" placeholder="name@example.com" style="padding: 11px 14px;">
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">ტელეფონის ნომერი *</label>
+                <input type="tel" name="phone" required class="form-control" placeholder="5XX XX XX XX" style="padding: 11px 14px;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">პაროლი *</label>
+                    <input type="password" name="password" required class="form-control" placeholder="••••••••" style="padding: 11px 14px;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">გაიმეორეთ პაროლი *</label>
+                    <input type="password" name="confirm_password" required class="form-control" placeholder="••••••••" style="padding: 11px 14px;">
+                </div>
+            </div>
+
+            <!-- რეფერალური კოდის ველი -->
+            <div style="background: var(--bg-main); border: 1px dashed var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 22px;">
+                <label style="display: block; font-size: 0.86rem; font-weight: 700; margin-bottom: 6px;">
+                    მეგობრის რეფერალური კოდი <span style="font-weight: 500; color: var(--text-muted);">(არასავალდებულო)</span>
+                </label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" name="referral_code" id="reg-ref-input" value="{{ prefill_ref or '' }}"
+                           class="form-control" placeholder="მაგ: ANDRIA15"
+                           style="text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="verifyRegReferral()">შემოწმება</button>
+                </div>
+                <div id="reg-ref-feedback" style="font-size: 0.82rem; font-weight: 600; margin-top: 8px; display: none;"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 13px; font-size: 0.98rem;">
+                რეგისტრაცია
+            </button>
+        </form>
+
+        <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+            უკვე გაქვთ ანგარიში?
+            <a href="{{ url_for('main.login') }}" style="color: var(--primary); font-weight: 700; text-decoration: underline;">შესვლა</a>
         </div>
-        <div class="mb-3">
-            <label class="form-label">ტელეფონი</label>
-            <input type="text" name="phone" class="form-control rounded-3" placeholder="5XX XX XX XX">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">პაროლი</label>
-            <input type="password" name="password" class="form-control rounded-3" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">გაიმეორეთ პაროლი</label>
-            <input type="password" name="confirm_password" class="form-control rounded-3" required>
-        </div>
-        <button type="submit" class="btn btn-terracotta w-100 py-2">რეგისტრაცია</button>
-    </form>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let refTimer = null;
+const refInput = document.getElementById('reg-ref-input');
+
+function verifyRegReferral() {
+    const code = refInput.value.trim().toUpperCase();
+    const fb = document.getElementById('reg-ref-feedback');
+    if (!code) {
+        fb.style.display = 'none';
+        return;
+    }
+
+    fetch('/api/check-referral?code=' + encodeURIComponent(code))
+        .then(res => res.json())
+        .then(data => {
+            fb.style.display = 'block';
+            fb.textContent = data.message;
+            if (data.valid) {
+                fb.style.color = 'var(--accent-green)';
+                refInput.style.borderColor = 'var(--accent-green)';
+            } else {
+                fb.style.color = '#B91C1C';
+                refInput.style.borderColor = '#B91C1C';
+            }
+        });
+}
+
+refInput.addEventListener('input', function() {
+    clearTimeout(refTimer);
+    refTimer = setTimeout(verifyRegReferral, 450);
+});
+
+if (refInput.value.trim() !== '') {
+    verifyRegReferral();
+}
+</script>
 {% endblock %}

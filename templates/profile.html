@@ -1,78 +1,162 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}ჩემი პროფილი — სახლური გემო{% endblock %}
+
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-    <h3 class="fw-bold mb-0">გამარჯობა, {{ current_user.username }}</h3>
-    <div class="bg-white border rounded-4 px-4 py-2 d-flex align-items-center gap-3">
-        <i class="bi bi-wallet2 text-success fs-4"></i>
-        <div>
-            <div class="small text-muted">დაგროვილი ბონუსი</div>
-            <div class="fw-bold text-success fs-5">{{ "%.2f"|format(current_user.bonus_balance or 0) }} ₾</div>
-        </div>
-    </div>
-</div>
+<div style="max-width: 960px; margin: 28px auto 50px;">
 
-<div class="bg-white border rounded-4 p-4 mb-4">
-    <div class="row align-items-center gy-3">
-        <div class="col-lg-8">
-            <h5 class="fw-bold mb-1"><i class="bi bi-gift text-danger me-2"></i>მოიწვიე მეგობარი — მიიღე 5 ₾ ბონუსი</h5>
-            <p class="small text-muted mb-0">
-                გაუზიარე შენი პერსონალური კოდი მეგობარს. პირველ შეკვეთაზე (20 ₾-დან) მას დააკლდება <strong>5 ₾</strong>, ხოლო შეკვეთის მიტანისთანავე შენ დაგერიცხება <strong>5 ₾</strong> ბალანსზე.
-                (მოწვეული მეგობრები: <strong>{{ invited_count }}</strong>)
-            </p>
-        </div>
-        <div class="col-lg-4 text-lg-end">
-            <div class="d-inline-flex align-items-center gap-2 border rounded-3 px-3 py-2 bg-light">
-                <code class="fs-5 fw-bold text-dark" id="myRefCode">{{ current_user.referral_code }}</code>
-                <button type="button" class="btn btn-sm btn-outline-dark" onclick="navigator.clipboard.writeText(document.getElementById('myRefCode').innerText); this.innerText='დაკოპირდა';">
-                    კოპირება
-                </button>
+    <!-- მომხმარებლის ზედა ბარათი -->
+    <div class="card-box" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 22px 26px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; flex-shrink: 0;">
+                {{ current_user.username[0]|upper }}
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4">
-    <div class="col-lg-7">
-        <div class="bg-white border rounded-4 p-4">
-            <h5 class="fw-bold mb-3">ჩემი შეკვეთები ({{ orders|length }})</h5>
-            {% for order in orders %}
-            <div class="border rounded-3 p-3 mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong>შეკვეთა #{{ order.id }} — {{ "%.2f"|format(order.total_price) }} ₾</strong>
-                    <span class="badge bg-dark">{{ order.status }}</span>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <h1 style="font-size: 1.4rem; font-weight: 800; line-height: 1.2;">გამარჯობა, {{ current_user.username }}!</h1>
+                    {% if current_user.is_admin %}
+                        <span class="badge badge-fasting" style="font-size: 0.72rem;">ადმინისტრატორი</span>
+                    {% endif %}
                 </div>
-                <div class="small text-muted mb-2">
-                    {{ order.created_at.strftime('%d.%m.%Y %H:%M') }} | {{ order.address }}
-                    {% if order.delivery_slot %}<br><i class="bi bi-clock me-1"></i>დრო: {{ order.delivery_slot }}{% endif %}
+                <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">
+                    {{ current_user.email }}
+                    {% if current_user.phone %} • {{ current_user.phone }}{% endif %}
                 </div>
-                <pre class="small p-2 rounded mb-2" style="font-family: inherit; background-color: var(--bg-stone);">{{ order.items_summary }}</pre>
-
-                {% if order.items_json %}
-                <form method="POST" action="{{ url_for('main.reorder', order_id=order.id) }}" class="text-end">
-                    <button type="submit" class="btn btn-sm btn-outline-brand">
-                        <i class="bi bi-arrow-repeat me-1"></i>შეკვეთის გამეორება
-                    </button>
-                </form>
-                {% endif %}
             </div>
-            {% else %}
-            <p class="text-muted small mb-0">შეკვეთები ჯერ არ გაქვთ.</p>
-            {% endfor %}
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {% if current_user.is_admin %}
+                <a href="{{ url_for('main.admin_panel') }}" class="btn btn-outline btn-sm">ადმინ-პანელი</a>
+            {% endif %}
+            <a href="{{ url_for('main.logout') }}" class="btn btn-outline btn-sm" style="color: #B91C1C; border-color: #F8C9C9;">გასვლა</a>
         </div>
     </div>
 
-    <div class="col-lg-5">
-        <div class="bg-white border rounded-4 p-4">
-            <h5 class="fw-bold mb-3">შენახული პროდუქტები</h5>
-            {% for p in liked_products %}
-            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="text-decoration-none text-dark fw-semibold small">{{ p.title }}</a>
-                <span class="fw-bold small">{{ "%.2f"|format(p.price) }} ₾</span>
+    <!-- ბონუსი და რეფერალური პროგრამა (2 თანაბარი სვეტი) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 22px;">
+
+        <!-- ბონუს-ბალანსი -->
+        <div class="card-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(145deg, #FFFFFF 0%, #F2FBF5 100%); border-color: #CBEAD6;">
+            <div>
+                <span style="display: inline-block; background: var(--accent-green-soft); color: var(--accent-green); font-size: 0.76rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px;">
+                    ლოიალობის ბალანსი
+                </span>
+                <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">დაგროვილი ქეშბექი</div>
+                <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); line-height: 1.15; margin: 6px 0;">
+                    {{ "%.2f"|format(current_user.bonus_balance or 0) }} ₾
+                </div>
             </div>
-            {% else %}
-            <p class="text-muted small mb-0">რჩეული პროდუქტების სია ცარიელია.</p>
-            {% endfor %}
+            <div style="font-size: 0.82rem; color: var(--text-muted); padding-top: 12px; border-top: 1px solid #DCEFE3; margin-top: 12px;">
+                ყოველი მიტანილი შეკვეთიდან გიბრუნდებათ <strong>5%</strong>, რომლის გამოყენებაც შემდეგ შეკვეთაზე შეგიძლიათ.
+            </div>
+        </div>
+
+        <!-- პირადი რეფერალური კოდი -->
+        <div class="card-box" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(145deg, #FFFFFF 0%, #FDF6F5 100%); border-color: #F2D3CD;">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="background: var(--primary-soft); color: var(--primary); font-size: 0.76rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;">
+                        მოიწვიე მეგობარი
+                    </span>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">
+                        მოწვეული: {{ invited_count }}
+                    </span>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0;">
+                    <span id="my-ref-code" style="background: #fff; border: 1.5px dashed var(--primary); color: var(--primary); font-size: 1.25rem; font-weight: 800; padding: 6px 14px; border-radius: 10px; letter-spacing: 0.06em;">
+                        {{ current_user.referral_code }}
+                    </span>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="copyMyRefCode()">კოპირება</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="copyMyRefLink()">ბმულის გაზიარება</button>
+                </div>
+            </div>
+
+            <div style="font-size: 0.82rem; color: var(--text-muted); padding-top: 12px; border-top: 1px solid #F4DFDB; margin-top: 12px;">
+                მეგობარს <strong>-5.00 ₾</strong> პირველ შეკვეთაზე (20 ₾+), თქვენ კი <strong>+5.00 ₾</strong> ბონუსი შეკვეთის მიტანისას.
+            </div>
         </div>
     </div>
+
+    <!-- შეკვეთების ისტორია -->
+    <div class="card-box" style="padding: 24px 26px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 1.15rem; font-weight: 800;">ჩემი შეკვეთები ({{ orders|length }})</h3>
+            {% if orders %}
+                <a href="{{ url_for('main.home') }}" class="btn btn-outline btn-sm">+ ახალი შეკვეთა</a>
+            {% endif %}
+        </div>
+
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>თარიღი</th>
+                        <th>პროდუქტები</th>
+                        <th>დაზოგილი</th>
+                        <th>ჯამი</th>
+                        <th>სტატუსი</th>
+                        <th>მოქმედება</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td><strong>#{{ o.id }}</strong></td>
+                        <td style="white-space: nowrap;">{{ o.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td style="white-space: pre-line; font-size: 0.85rem;">{{ o.items_summary }}</td>
+                        <td style="font-size: 0.82rem; color: var(--accent-green);">
+                            {% if (o.discount_amount or 0) > 0 %}<div>ფასდაკლება: -{{ "%.2f"|format(o.discount_amount) }} ₾</div>{% endif %}
+                            {% if (o.bonus_used or 0) > 0 %}<div>ბონუსი: -{{ "%.2f"|format(o.bonus_used) }} ₾</div>{% endif %}
+                            {% if not (o.discount_amount or 0) and not (o.bonus_used or 0) %}-{% endif %}
+                        </td>
+                        <td style="white-space: nowrap;"><strong>{{ "%.2f"|format(o.total_price) }} ₾</strong></td>
+                        <td>
+                            {% if o.status == 'pending' %}<span class="status-pill status-pending">ახალი</span>
+                            {% elif o.status == 'preparing' %}<span class="status-pill status-preparing">მზადდება</span>
+                            {% elif o.status == 'delivered' %}<span class="status-pill status-delivered">მიტანილია</span>
+                            {% else %}<span class="status-pill status-cancelled">გაუქმებული</span>{% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('main.reorder', order_id=o.id) }}">
+                                <button type="submit" class="btn btn-outline btn-sm">თავიდან შეკვეთა</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <div style="text-align: center; padding: 34px 16px; background: var(--bg-main); border-radius: 12px; border: 1px dashed var(--border-color);">
+                <div style="font-weight: 700; font-size: 1rem; margin-bottom: 6px;">შეკვეთების ისტორია ცარიელია</div>
+                <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 16px;">აირჩიეთ სასურველი ნახევარფაბრიკატები და დააგროვეთ 5% ქეშბექი პირველივე შეკვეთიდან.</p>
+                <a href="{{ url_for('main.home') }}" class="btn btn-primary btn-sm">მენიუს დათვალიერება</a>
+            </div>
+        {% endif %}
+    </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyMyRefCode() {
+    const code = document.getElementById('my-ref-code').textContent.trim();
+    navigator.clipboard.writeText(code).then(() => {
+        showToast('თქვენი რეფერალური კოდი დაკოპირდა: ' + code);
+    });
+}
+
+function copyMyRefLink() {
+    const code = document.getElementById('my-ref-code').textContent.trim();
+    const link = window.location.origin + '/register?ref=' + encodeURIComponent(code);
+    navigator.clipboard.writeText(link).then(() => {
+        showToast('მოწვევის ბმული დაკოპირდა! გაუგზავნეთ მეგობარს.');
+    });
+}
+</script>
 {% endblock %}
