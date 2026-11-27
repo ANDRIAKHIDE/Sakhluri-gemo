@@ -1,67 +1,353 @@
 {% extends "base.html" %}
 {% block title %}საბითუმო თანამშრომლობა — სახლური გემო{% endblock %}
+
 {% block content %}
+<div class="b2b-grid">
+    <!-- მარცხენა ბარათი: საბითუმო ფასების ცხრილი და კალკულატორი -->
+    <div class="card-box b2b-card">
+        <span class="b2b-eyebrow">❖ B2B პარტნიორობა</span>
+        <h2 class="b2b-title">საბითუმო მიწოდება მაღაზიებისა და კაფეებისთვის</h2>
+        <p class="b2b-subtitle">
+            ვამარაგებთ სუპერმარკეტებს, უბნის მაღაზიებს, კაფეებსა და საოფისე სამზარეულოებს სტაბილური ხარისხითა და სპეციალური ფასებით.
+        </p>
 
-<div class="row g-4">
-    <div class="col-lg-7">
-        <div class="bg-white border rounded-4 p-4">
-            <span class="hero-eyebrow mb-2">B2B პარტნიორობა</span>
-            <h2 class="h3 fw-bold mb-2">საბითუმო მიწოდება მაღაზიებისა და კაფეებისთვის</h2>
-            <p class="text-muted small mb-4">
-                ვამარაგებთ სუპერმარკეტებს, უბნის მაღაზიებს, კაფეებსა და საოფისე სამზარეულოებს სტაბილური ხარისხითა და სპეციალური ფასებით.
-            </p>
+        <div class="b2b-table-wrap">
+            <table class="b2b-table">
+                <thead>
+                    <tr>
+                        <th>პროდუქტი</th>
+                        <th>ერთეული</th>
+                        <th>საცალო</th>
+                        <th>საბითუმო</th>
+                        <th style="width: 90px;">რაოდენობა</th>
+                        <th style="text-align: right;">ჯამი</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr class="b2b-row"
+                        data-title="{{ p.title }}"
+                        data-unit="{{ p.unit }}"
+                        data-price="{{ p.wholesale_price }}">
+                        <td class="b2b-prod-name">{{ p.title }}</td>
+                        <td><span class="b2b-unit-badge">{{ p.unit }}</span></td>
+                        <td class="b2b-retail-price">{{ "%.2f"|format(p.price) }} ₾</td>
+                        <td class="b2b-wholesale-price">{{ "%.2f"|format(p.wholesale_price) }} ₾</td>
+                        <td>
+                            <input type="number"
+                                   min="0"
+                                   value="0"
+                                   class="b2b-qty-input"
+                                   oninput="recalcWholesale()"
+                                   aria-label="რაოდენობა">
+                        </td>
+                        <td class="b2b-row-total" style="text-align: right; font-weight: 700; color: #374151;">0.00 ₾</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #6b7280; padding: 20px;">
+                            საბითუმო ფასები მალე განახლდება.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-            <div class="table-responsive">
-                <table class="table align-middle small">
-                    <thead>
-                        <tr>
-                            <th>პროდუქტი</th>
-                            <th>ერთეული</th>
-                            <th>საცალო</th>
-                            <th class="text-success">საბითუმო ფასი</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for p in products %}
-                        <tr>
-                            <td class="fw-semibold">{{ p.title }}</td>
-                            <td>{{ p.unit }}</td>
-                            <td class="text-muted text-decoration-line-through">{{ "%.2f"|format(p.price) }} ₾</td>
-                            <td class="fw-bold text-success">{{ "%.2f"|format(p.wholesale_price) }} ₾</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- საბითუმო შეკვეთის დაანგარიშების ბლოკი ცხრილის ქვევით -->
+        <div class="b2b-calc-box">
+            <div class="b2b-calc-row">
+                <span>საბითუმო შეკვეთის სრული ჯამი:</span>
+                <strong id="b2bGrandTotal" style="font-size: 1.35rem; color: var(--primary, #8b1e1e);">0.00 ₾</strong>
+            </div>
+            <div id="b2bMinAlert" class="b2b-min-alert b2b-min-warn">
+                საბითუმო შეკვეთის მინიმალური ღირებულებაა <strong>100.00 ₾</strong> (დაამატეთ კიდევ <span id="b2bRemaining">100.00</span> ₾).
             </div>
         </div>
     </div>
 
-    <div class="col-lg-5">
-        <div class="bg-white border rounded-4 p-4">
-            <h4 class="fw-bold mb-2">მოითხოვეთ პარტნიორობა</h4>
-            <p class="text-muted small mb-3">დაგვიტოვეთ საკონტაქტო ინფორმაცია და მენეჯერი დაგიკავშირდებათ დეტალების შესათანხმებლად.</p>
+    <!-- მარჯვენა ბარათი: განაცხადის ფორმა -->
+    <div class="card-box b2b-card">
+        <h3 class="b2b-form-title">მოითხოვეთ პარტნიორობა</h3>
+        <p class="b2b-subtitle">
+            აირჩიეთ სასურველი რაოდენობები მარცხენა ცხრილში (მინ. 100 ₾), შეავსეთ საკონტაქტო ველები და გაგზავნეთ განაცხადი.
+        </p>
 
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">ობიექტის / კომპანიის დასახელება *</label>
-                    <input type="text" name="company_name" class="form-control rounded-3" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">საკონტაქტო პირი</label>
-                    <input type="text" name="contact_person" class="form-control rounded-3">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">ტელეფონის ნომერი *</label>
-                    <input type="text" name="phone" class="form-control rounded-3" placeholder="5XX XX XX XX" required>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label small fw-semibold">სასურველი ასორტიმენტი და სავარაუდო მოცულობა</label>
-                    <textarea name="details" rows="3" class="form-control rounded-3" placeholder="მაგ: კვირაში 20 კგ პელმენი და 200 ცალი ხინკალი..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-brand w-100 py-2">განაცხადის გაგზავნა</button>
-            </form>
-        </div>
+        <form method="POST" class="b2b-form" id="b2bOrderForm">
+            <div class="b2b-field">
+                <label>ობიექტის / კომპანიის დასახელება *</label>
+                <input type="text" name="company_name" class="form-control" placeholder="მაგ: შპს გემო / მარკეტი..." required>
+            </div>
+            <div class="b2b-field">
+                <label>საკონტაქტო პირი</label>
+                <input type="text" name="contact_person" class="form-control" placeholder="სახელი და გვარი">
+            </div>
+            <div class="b2b-field">
+                <label>ტელეფონის ნომერი *</label>
+                <input type="text" name="phone" class="form-control" placeholder="5XX XX XX XX" required>
+            </div>
+            <div class="b2b-field">
+                <label>არჩეული ასორტიმენტი და დამატებითი შენიშვნა *</label>
+                <textarea name="details" id="b2bDetailsField" rows="4" class="form-control" placeholder="აირჩიეთ რაოდენობები მარცხენა ცხრილიდან..." required></textarea>
+            </div>
+            <button type="submit" id="b2bSubmitBtn" class="btn btn-primary b2b-submit" disabled style="opacity: 0.55; cursor: not-allowed;">
+                მინიმალური შეკვეთა 100.00 ₾
+            </button>
+        </form>
     </div>
 </div>
 
+<style>
+.b2b-grid {
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap: 24px;
+    margin: 24px 0 40px;
+    align-items: start;
+}
+.b2b-card {
+    background: #ffffff;
+    border: 1px solid #eadfd5;
+    border-radius: 16px;
+    padding: 26px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+}
+.b2b-eyebrow {
+    display: inline-block;
+    background: #fdf2f2;
+    color: var(--primary, #8b1e1e);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+}
+.b2b-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0 0 8px;
+}
+.b2b-form-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0 0 8px;
+}
+.b2b-subtitle {
+    font-size: 13.5px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin: 0 0 20px;
+}
+.b2b-table-wrap {
+    overflow-x: auto;
+}
+.b2b-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.b2b-table th {
+    text-align: left;
+    padding: 11px 10px;
+    background: #faf6f2;
+    color: #4b5563;
+    font-weight: 700;
+    font-size: 12.5px;
+    border-bottom: 2px solid #eadfd5;
+    white-space: nowrap;
+}
+.b2b-table td {
+    padding: 11px 10px;
+    border-bottom: 1px solid #f3ece6;
+    vertical-align: middle;
+}
+.b2b-table tr:hover td {
+    background: #fffcfa;
+}
+.b2b-prod-name {
+    font-weight: 700;
+    color: #1f2937;
+}
+.b2b-unit-badge {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.b2b-retail-price {
+    color: #9ca3af;
+    text-decoration: line-through;
+    font-size: 13px;
+    white-space: nowrap;
+}
+.b2b-wholesale-price {
+    color: #15803d;
+    font-weight: 800;
+    font-size: 15px;
+    white-space: nowrap;
+}
+.b2b-qty-input {
+    width: 68px;
+    padding: 6px 8px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+.b2b-qty-input:focus {
+    outline: none;
+    border-color: var(--primary, #8b1e1e);
+    background: #fdf8f5;
+}
+.b2b-calc-box {
+    margin-top: 18px;
+    padding: 16px 18px;
+    background: #faf6f2;
+    border: 1px solid #eadfd5;
+    border-radius: 12px;
+}
+.b2b-calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+}
+.b2b-min-alert {
+    margin-top: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.b2b-min-warn {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+.b2b-min-ok {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+.b2b-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.b2b-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 6px;
+}
+.b2b-field .form-control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+.b2b-field .form-control:focus {
+    outline: none;
+    border-color: var(--primary, #8b1e1e);
+}
+.b2b-submit {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 10px;
+    margin-top: 4px;
+    transition: all 0.2s ease;
+}
+@media (max-width: 960px) {
+    .b2b-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+const MIN_WHOLESALE_TOTAL = 100.0;
+
+function recalcWholesale() {
+    const rows = document.querySelectorAll('.b2b-row');
+    let grandTotal = 0;
+    let summaryLines = [];
+
+    rows.forEach(row => {
+        const title = row.dataset.title;
+        const unit = row.dataset.unit;
+        const price = parseFloat(row.dataset.price) || 0;
+        const qtyInput = row.querySelector('.b2b-qty-input');
+        let qty = parseInt(qtyInput.value, 10);
+
+        if (isNaN(qty) || qty < 0) {
+            qty = 0;
+        }
+
+        const lineTotal = qty * price;
+        grandTotal += lineTotal;
+
+        const rowTotalEl = row.querySelector('.b2b-row-total');
+        rowTotalEl.textContent = lineTotal.toFixed(2) + ' ₾';
+        rowTotalEl.style.color = qty > 0 ? '#15803d' : '#374151';
+
+        if (qty > 0) {
+            summaryLines.push(`• ${title} (${unit}) × ${qty} = ${lineTotal.toFixed(2)} ₾`);
+        }
+    });
+
+    const grandTotalEl = document.getElementById('b2bGrandTotal');
+    const minAlertEl = document.getElementById('b2bMinAlert');
+    const submitBtn = document.getElementById('b2bSubmitBtn');
+    const detailsField = document.getElementById('b2bDetailsField');
+
+    grandTotalEl.textContent = grandTotal.toFixed(2) + ' ₾';
+
+    if (summaryLines.length > 0) {
+        detailsField.value = summaryLines.join('\n') + `\n\nსაბითუმო ჯამი: ${grandTotal.toFixed(2)} ₾`;
+    } else {
+        detailsField.value = '';
+    }
+
+    if (grandTotal >= MIN_WHOLESALE_TOTAL) {
+        minAlertEl.className = 'b2b-min-alert b2b-min-ok';
+        minAlertEl.innerHTML = '✓ მინიმალური ზღვარი (100.00 ₾) დაკმაყოფილებულია. შეგიძლიათ გაგზავნოთ განაცხადი.';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+        submitBtn.textContent = `განაცხადის გაგზავნა (${grandTotal.toFixed(2)} ₾)`;
+    } else {
+        const remaining = (MIN_WHOLESALE_TOTAL - grandTotal).toFixed(2);
+        minAlertEl.className = 'b2b-min-alert b2b-min-warn';
+        minAlertEl.innerHTML = `საბითუმო შეკვეთის მინიმალური ღირებულებაა <strong>100.00 ₾</strong> (დაამატეთ კიდევ <span>${remaining}</span> ₾).`;
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.55';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.textContent = 'მინიმალური შეკვეთა 100.00 ₾';
+    }
+}
+
+document.getElementById('b2bOrderForm').addEventListener('submit', function(e) {
+    const totalText = document.getElementById('b2bGrandTotal').textContent.replace(' ₾', '');
+    const total = parseFloat(totalText) || 0;
+    if (total < MIN_WHOLESALE_TOTAL) {
+        e.preventDefault();
+        alert('საბითუმო შეკვეთის მინიმალური თანხაა 100.00 ₾!');
+    }
+});
+</script>
 {% endblock %}

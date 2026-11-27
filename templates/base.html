@@ -3,44 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}სახლური გემო — ხელნაკეთი გაყინული ნახევარფაბრიკატები{% endblock %}</title>
-    <meta name="description" content="ხელნაკეთი გაყინული ხინკალი, პელმენი, ბლინები და ხორცეული ადგილზე მიტანით თბილისში.">
-    <meta property="og:title" content="სახლური გემო — ხელნაკეთი გაყინული ნახევარფაბრიკატები">
-    <meta property="og:description" content="100% ნატურალური ინგრედიენტები, შოკური გაყინვა და ადგილზე მიტანა. 50 ₾-დან მიტანა უფასოა!">
+    <title>{% block title %}სახლური გემო — ხელნაკეთი ქართული ნახევარფაბრიკატები{% endblock %}</title>
+    <meta name="description" content="სახლური გემო — 100% ნატურალური, ხელით მოხვეული ხინკალი, პილმენი, ბლინჩიკები და საოჯახო ნახევარფაბრიკატები ადგილზე მიტანით.">
+    <meta name="keywords" content="სახლური გემო, ხელნაკეთი ხინკალი, პილმენი, ბლინჩიკები, ნახევარფაბრიკატები, საბითუმო, ადგილზე მიტანა, saxluri gemo">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.base_url }}">
+
+    <!-- Open Graph (Google, Facebook, Viber, Telegram) -->
+    <meta property="og:site_name" content="სახლური გემო">
+    <meta property="og:title" content="სახლური გემო — ხელნაკეთი ქართული ნახევარფაბრიკატები">
+    <meta property="og:description" content="100% ნატურალური ინგრედიენტები, ოჯახური რეცეპტი და ადგილზე მიტანა. 50 ₾-დან მიტანა უფასოა!">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?auto=format&fit=crop&w=1200&q=80">
+    <meta property="og:url" content="{{ request.base_url }}">
+    <meta property="og:image" content="{{ url_for('static', filename='uploads/logo.png', _external=True) }}">
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='uploads/logo.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-<header class="navbar">
+<header class="navbar" id="mainHeader">
     <div class="container nav-inner">
         <a href="{{ url_for('main.home') }}" class="brand">
+            <img src="{{ url_for('static', filename='uploads/logo.png') }}" alt="სახლური გემო" class="brand-logo">
             <div>
                 სახლური გემო
-                <span class="brand-sub">ხელნაკეთი ნახევარფაბრიკატები</span>
+                <span class="brand-sub">ნახევარფაბრიკატები</span>
             </div>
         </a>
 
         <nav class="nav-links">
-            <a href="{{ url_for('main.home') }}" class="nav-link">მენიუ</a>
-            <a href="{{ url_for('main.build_box') }}" class="nav-link nav-link-highlight">ააწყვე ბოქსი (-10%)</a>
-            <a href="{{ url_for('main.wholesale') }}" class="nav-link">საბითუმო (B2B)</a>
-            <a href="{{ url_for('main.track_order') }}" class="nav-link">შეკვეთის შემოწმება</a>
+            <a href="{{ url_for('main.home') }}" class="nav-link {% if request.endpoint == 'main.home' %}active-nav{% endif %}">მენიუ</a>
+            <a href="{{ url_for('main.wholesale') }}" class="nav-link {% if request.endpoint == 'main.wholesale' %}active-nav{% endif %}">საბითუმო (B2B)</a>
+            <a href="{{ url_for('main.track_order') }}" class="nav-link {% if request.endpoint == 'main.track_order' %}active-nav{% endif %}">შეკვეთის შემოწმება</a>
             {% if current_user.is_authenticated and current_user.is_admin %}
-                <a href="{{ url_for('main.admin_panel') }}" class="nav-link" style="color: var(--primary); font-weight: 800;">ადმინ-პანელი</a>
+                <a href="{{ url_for('main.admin_panel') }}" class="nav-link {% if request.endpoint == 'main.admin_panel' %}active-nav{% endif %}" style="font-weight: 800;">ადმინ-პანელი</a>
             {% endif %}
         </nav>
 
         <div class="nav-actions">
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.profile') }}" class="btn btn-outline btn-sm">{{ current_user.username }}</a>
+                <!-- შეტყობინებების ზარი -->
+                <div class="notif-wrapper">
+                    <button type="button" class="btn btn-outline btn-sm notif-btn" onclick="toggleNotifDropdown()" title="შეტყობინებები">
+                        🔔 <span class="notif-badge" id="notifCount">{{ user_notifications|length }}</span>
+                    </button>
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-title">შეტყობინებები</div>
+                        {% if user_notifications %}
+                            {% for n in user_notifications %}
+                            <div class="notif-item" id="notif-{{ n.id }}">
+                                <p>{{ n.message }}</p>
+                                <button type="button" onclick="markNotifRead({{ n.id }})">წავიკითხე ✓</button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="notif-empty">ახალი შეტყობინება არ არის</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <a href="{{ url_for('main.profile') }}" class="btn btn-outline btn-sm {% if request.endpoint == 'main.profile' %}active-nav-btn{% endif %}">{{ current_user.username }}</a>
             {% else %}
                 <a href="{{ url_for('main.login') }}" class="btn btn-outline btn-sm">შესვლა</a>
             {% endif %}
 
             <a href="{{ url_for('main.cart') }}" class="cart-btn">
                 <span>კალათა</span>
+                <span id="nav-cart-total" class="nav-cart-price">{{ "%.2f"|format(mini_cart_total) }} ₾</span>
                 <span class="cart-badge" id="nav-cart-count">{{ cart_count }}</span>
             </a>
         </div>
@@ -48,12 +78,11 @@
 
     <!-- მობილური ნავიგაციის ზოლი -->
     <div class="mobile-menu-bar">
-        <a href="{{ url_for('main.home') }}" class="cat-pill">მენიუ</a>
-        <a href="{{ url_for('main.build_box') }}" class="cat-pill" style="background: var(--primary-soft); color: var(--primary);">ბოქსი (-10%)</a>
-        <a href="{{ url_for('main.wholesale') }}" class="cat-pill">საბითუმო</a>
-        <a href="{{ url_for('main.track_order') }}" class="cat-pill">შეკვეთის სტატუსი</a>
+        <a href="{{ url_for('main.home') }}" class="cat-pill {% if request.endpoint == 'main.home' %}active-pill{% endif %}">მენიუ</a>
+        <a href="{{ url_for('main.wholesale') }}" class="cat-pill {% if request.endpoint == 'main.wholesale' %}active-pill{% endif %}">საბითუმო</a>
+        <a href="{{ url_for('main.track_order') }}" class="cat-pill {% if request.endpoint == 'main.track_order' %}active-pill{% endif %}">სტატუსი</a>
         {% if current_user.is_authenticated and current_user.is_admin %}
-            <a href="{{ url_for('main.admin_panel') }}" class="cat-pill" style="background: var(--primary); color: #fff;">ადმინი</a>
+            <a href="{{ url_for('main.admin_panel') }}" class="cat-pill {% if request.endpoint == 'main.admin_panel' %}active-pill{% endif %}">ადმინი</a>
         {% endif %}
     </div>
 </header>
@@ -72,6 +101,58 @@
     {% block content %}{% endblock %}
 </main>
 
+<!-- მცურავი მინი-კალათა -->
+<div class="floating-mini-cart {% if cart_count == 0 %}hidden{% endif %}" id="floatingMiniCart">
+    <div class="mini-cart-header" onclick="toggleMiniCart()">
+        <span>🛒 კალათა (<span id="mini-cart-count">{{ cart_count }}</span>)</span>
+        <span><strong id="mini-cart-total">{{ "%.2f"|format(mini_cart_total) }} ₾</strong> <span id="mini-cart-arrow">▲</span></span>
+    </div>
+    <div class="mini-cart-body" id="miniCartBody">
+        <ul class="mini-cart-list" id="miniCartList">
+            {% for item in mini_cart_items %}
+            <li>
+                <span>{{ item['product'].title }} × {{ item['quantity'] }}</span>
+                <span>{{ "%.2f"|format(item['line_total']) }} ₾</span>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="mini-cart-footer">
+            <div class="mini-cart-sum">სულ: <strong id="mini-cart-footer-total">{{ "%.2f"|format(mini_cart_total) }} ₾</strong></div>
+            <a href="{{ url_for('main.cart') }}" class="mini-cart-btn">კალათის ნახვა / შეკვეთა</a>
+        </div>
+    </div>
+</div>
+
+<!-- შეფასების მოდალური ფანჯარა -->
+{% if pending_review_order and pending_review_products %}
+<div class="review-modal-backdrop" id="reviewModal">
+    <div class="review-modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3 style="margin:0; color:var(--primary);">შეკვეთა #{{ pending_review_order.id }} ჩაბარებულია!</h3>
+        </div>
+        <p style="font-size:14px; color:#555; margin-bottom:14px;">გთხოვთ შეაფასოთ შეძენილი პროდუქტები:</p>
+        <form action="{{ url_for('main.batch_submit_review') }}" method="POST">
+            <input type="hidden" name="order_id" value="{{ pending_review_order.id }}">
+            {% for prod in pending_review_products %}
+            <div class="review-product-card">
+                <strong>{{ prod.title }}</strong>
+                <input type="hidden" name="product_id" value="{{ prod.id }}">
+                <select name="rating_{{ prod.id }}" required>
+                    <option value="5">⭐⭐⭐⭐⭐ (5 - შესანიშნავი)</option>
+                    <option value="4">⭐⭐⭐⭐ (4 - კარგი)</option>
+                    <option value="3">⭐⭐⭐ (3 - საშუალო)</option>
+                    <option value="2">⭐⭐ (2 - ცუდი)</option>
+                    <option value="1">⭐ (1 - ძალიან ცუდი)</option>
+                </select>
+                <textarea name="comment_{{ prod.id }}" rows="2" placeholder="გაგვიზიარეთ თქვენი შთაბეჭდილება..."></textarea>
+            </div>
+            {% endfor %}
+            <button type="submit" class="review-submit-btn">შეფასების გაგზავნა</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <!-- AJAX Toast შეტყობინება -->
 <div id="toast-box" class="toast-notification"></div>
 
@@ -88,13 +169,62 @@
 </footer>
 
 <script>
+// 1. მობილურზე ჩამოსქროლვისას ნავბარის დამალვა და ასქროლვისას გამოჩენა
+let lastScrollY = window.scrollY;
+const headerEl = document.getElementById('mainHeader');
+
+window.addEventListener('scroll', () => {
+    if (window.innerWidth <= 768 && headerEl) {
+        const currentScrollY = window.scrollY;
+        if (currentScrollY > lastScrollY && currentScrollY > 70) {
+            headerEl.classList.add('navbar-hidden');
+        } else {
+            headerEl.classList.remove('navbar-hidden');
+        }
+        lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
+    }
+});
+
+// 2. შეტყობინებების ფანჯარა
+function toggleNotifDropdown() {
+    const dd = document.getElementById('notifDropdown');
+    if (dd) dd.classList.toggle('show');
+}
+
+function markNotifRead(id) {
+    fetch(`/notifications/read/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const el = document.getElementById(`notif-${id}`);
+                if (el) el.remove();
+                const badge = document.getElementById('notifCount');
+                if (badge) {
+                    const nextVal = Math.max(0, parseInt(badge.textContent || '0') - 1);
+                    badge.textContent = nextVal;
+                }
+            }
+        });
+}
+
+// 3. მინი-კალათის გაშლა/ჩაკეცვა
+function toggleMiniCart() {
+    const body = document.getElementById('miniCartBody');
+    const arrow = document.getElementById('mini-cart-arrow');
+    if (body) {
+        body.classList.toggle('open');
+        if (arrow) arrow.textContent = body.classList.contains('open') ? '▼' : '▲';
+    }
+}
+
+// 4. AJAX Toast და კალათის/მინი-კალათის მყისიერი განახლება
 function showToast(msg) {
     const toast = document.getElementById('toast-box');
     toast.textContent = msg;
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 2800);
+    }, 1800);
 }
 
 document.addEventListener('submit', function(e) {
@@ -116,6 +246,28 @@ document.addEventListener('submit', function(e) {
                     badge.classList.add('badge-bump');
                     setTimeout(() => badge.classList.remove('badge-bump'), 250);
                 }
+
+                if (data.cart_total) {
+                    const navTotal = document.getElementById('nav-cart-total');
+                    const miniTotal = document.getElementById('mini-cart-total');
+                    const miniFooterTotal = document.getElementById('mini-cart-footer-total');
+                    const miniCount = document.getElementById('mini-cart-count');
+                    const miniBox = document.getElementById('floatingMiniCart');
+                    const miniList = document.getElementById('miniCartList');
+
+                    if (navTotal) navTotal.textContent = `${data.cart_total} ₾`;
+                    if (miniTotal) miniTotal.textContent = `${data.cart_total} ₾`;
+                    if (miniFooterTotal) miniFooterTotal.textContent = `${data.cart_total} ₾`;
+                    if (miniCount) miniCount.textContent = data.cart_count;
+                    if (miniBox) miniBox.classList.remove('hidden');
+
+                    if (miniList && data.mini_items) {
+                        miniList.innerHTML = data.mini_items.map(i =>
+                            `<li><span>${i.title} × ${i.qty}</span><span>${i.line_total} ₾</span></li>`
+                        ).join('');
+                    }
+                }
+
                 showToast(data.message);
             } else {
                 showToast(data.message || 'შეცდომა დამატებისას');

@@ -23,6 +23,7 @@ class User(UserMixin, db.Model):
     orders = db.relationship('Order', backref='buyer', lazy=True)
     likes = db.relationship('ProductLike', backref='user', lazy=True, cascade="all, delete-orphan")
     reviews = db.relationship('Review', backref='author', lazy=True, cascade="all, delete-orphan")
+    notifications = db.relationship('Notification', backref='user', lazy=True, cascade="all, delete-orphan")
 
 
 class Product(db.Model):
@@ -99,3 +100,13 @@ class Review(db.Model):
 
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=True)
+    message = db.Column(db.String(255), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    trigger_review = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=get_utc_now)

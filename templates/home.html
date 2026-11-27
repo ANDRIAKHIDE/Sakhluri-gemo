@@ -1,52 +1,52 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<section class="hero-banner">
-    <div class="hero-content">
-        <span class="hero-tag">100% ნატურალური ინგრედიენტები • შოკური გაყინვა</span>
-        <h1 class="hero-title">ნამდვილი ოჯახური გემო პირდაპირ თქვენს საყინულეში</h1>
-        <p class="hero-desc">ხელით მოხვეული ხინკალი, წვნიანი პელმენი და ოქროსფერი ბლინები. მოამზადეთ სახლში 7-9 წუთში.</p>
-        <div class="hero-perks">
-            <span class="perk-pill">50 ₾-დან უფასო მიტანა</span>
-            <span class="perk-pill">3+ პროდუქტი ბოქსში = -10%</span>
-            <span class="perk-pill">5% ქეშბექი ყოველ შეკვეთაზე</span>
+<!-- ქართული ორნამენტებით გაფორმებული პრემიუმ მისასალმებელი ბლოკი -->
+<section class="geo-hero-card">
+    <!-- ზედა ქართული ჩუქურთმა (SVG) -->
+    <div class="geo-ornament-border"></div>
+
+    <div class="geo-hero-inner">
+        <div class="geo-hero-text">
+            <div class="geo-badge-row">
+                <span class="geo-gold-tag">✦ ქართული გემო ✦</span>
+                <span class="geo-sub-tag">100% ნატურალური </span>
+            </div>
+            <h1 class="geo-hero-title">ოჯახური სითბო და ნამდვილი ქართული სუფრის გემო</h1>
+            <p class="geo-hero-subtitle">ხელით მოხვეული ხინკალი, წვნიანი პილმენი, ოქროსფერი ბლინჩიკები და შინაური ტკბილეული — მზადდება 7-9 წუთში.</p>
+
+            <div class="geo-perks-strip">
+                <span class="geo-perk">❖ 50 ₾-დან უფასო მიტანა</span>
+                <span class="geo-perk">❖ 3+ პროდუქტი = <strong>-10% ბოქსზე</strong></span>
+                <span class="geo-perk">❖ <strong>5% ქეშბექი</strong> ყოველ შეკვეთაზე</span>
+            </div>
+        </div>
+
+        <div class="geo-hero-cta">
+            <a href="{{ url_for('main.build_box') }}" class="btn-geo-gold">
+                ✦ ააწყვე საოჯახო ბოქსი (-10%)
+            </a>
+            {% if current_user.is_authenticated and current_user.referral_code %}
+                <button type="button" class="btn-geo-glass" onclick="copyHomeRefLink('{{ current_user.referral_code }}')">
+                    მოიწვიე მეგობარი (+5 ₾)
+                </button>
+            {% else %}
+                <a href="{{ url_for('main.register') }}" class="btn-geo-glass">
+                    მიიღე +5 ₾ ბონუსი
+                </a>
+            {% endif %}
         </div>
     </div>
-    <div>
-        <a href="{{ url_for('main.build_box') }}" class="btn btn-primary" style="padding: 14px 24px; font-size: 1rem;">
-            ააწყვე საოჯახო ბოქსი (-10%)
-        </a>
-    </div>
+
+    <!-- ქვედა ქართული ჩუქურთმა (SVG) -->
+    <div class="geo-ornament-border"></div>
 </section>
 
-<!-- აქციებისა და რეფერალური პროგრამის საინფორმაციო ზოლი -->
-<div style="background: linear-gradient(135deg, #FDF6F5 0%, #F2FBF5 100%); border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px 20px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span style="background: var(--primary); color: #fff; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.03em; white-space: nowrap;">
-            აქცია &amp; ბონუსები
-        </span>
-        <div style="font-size: 0.9rem; line-height: 1.45;">
-            <strong>მოიწვიე მეგობარი და მიიღე +5.00 ₾!</strong>
-            <span style="color: var(--text-muted);">
-                მეგობარს <strong>-5.00 ₾</strong> პირველ შეკვეთაზე (20 ₾+), ხოლო თქვენ <strong>5% ქეშბექი</strong> ყოველ შეკვეთაზე.
-            </span>
-        </div>
-    </div>
-
-    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap;">
-        {% if current_user.is_authenticated and current_user.referral_code %}
-            <button type="button" class="btn btn-primary btn-sm" onclick="copyHomeRefLink('{{ current_user.referral_code }}')">
-                ბმულის კოპირება ({{ current_user.referral_code }})
-            </button>
-            <a href="{{ url_for('main.profile') }}" class="btn btn-outline btn-sm" style="background: #fff;">
-                პროფილი
-            </a>
-        {% else %}
-            <a href="{{ url_for('main.register') }}" class="btn btn-primary btn-sm">
-                კოდის მიღება
-            </a>
-        {% endif %}
-    </div>
+<!-- დეკორატიული ქართული გამყოფი ხაზი -->
+<div class="geo-section-divider">
+    <span class="geo-div-line"></span>
+    <span class="geo-div-emblem">❖ ჩვენი მენიუ ❖</span>
+    <span class="geo-div-line"></span>
 </div>
 
 <!-- კატეგორიები და ძიება -->
@@ -60,12 +60,12 @@
     </div>
 
     <form method="GET" action="{{ url_for('main.home') }}" class="search-box">
-        <input type="text" name="q" value="{{ search_query }}" placeholder="მოძებნე პროდუქტი..." class="form-control">
+        <input type="text" name="q" value="{{ search_query }}" placeholder="მოძებნე კერძი, ტკბილეული..." class="form-control">
         <button type="submit" class="btn btn-outline btn-sm">ძიება</button>
     </form>
 </div>
 
-<!-- პროდუქტების სია -->
+<!-- პროდუქტების ბადე -->
 {% if products %}
     <div class="products-grid">
         {% for p in products %}
@@ -76,25 +76,20 @@
                 <div class="badges-top">
                     {% if p.dietary_tag == 'fasting' %}
                         <span class="badge badge-fasting">სამარხვო</span>
-                    {% else %}
-                        <span class="badge badge-standard">კლასიკური</span>
                     {% endif %}
                     <span class="badge badge-stock">მარაგშია: {{ p.stock_qty }}</span>
                 </div>
             </a>
 
             <div class="product-body">
-                <span class="product-cat">{{ p.category }}</span>
-                <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="product-title">{{ p.title }}</a>
-
-                <div class="product-meta-pills">
-                    <span class="meta-chip">{{ p.unit }}</span>
-                    {% if p.weight_info %}<span class="meta-chip">{{ p.weight_info }}</span>{% endif %}
-                    {% if p.cooking_time %}<span class="meta-chip">{{ p.cooking_time }}</span>{% endif %}
+                <div class="product-cat-row">
+                    <span class="product-cat">❖ {{ p.category }}</span>
                 </div>
 
-                {% if p.allergens %}
-                    <div class="allergen-note">ალერგენები: {{ p.allergens }}</div>
+                <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="product-title">{{ p.title }}</a>
+
+                {% if p.description %}
+                    <p class="product-short-desc">{{ p.description }}</p>
                 {% endif %}
 
                 <div class="product-footer">
@@ -105,7 +100,7 @@
 
                     <form method="POST" action="{{ url_for('main.add_to_cart', product_id=p.id) }}" class="ajax-cart-form">
                         <input type="hidden" name="quantity" value="1">
-                        <button type="submit" class="btn btn-primary btn-sm">+ კალათაში</button>
+                        <button type="submit" class="btn btn-primary btn-sm add-btn">+ დამატება</button>
                     </form>
                 </div>
             </div>
@@ -115,7 +110,7 @@
 {% else %}
     <div class="card-box" style="text-align: center; padding: 48px 20px;">
         <h3 style="margin-bottom: 8px;">ამჟამად მენიუში მარაგი ახლდება</h3>
-        <p style="color: var(--text-muted); margin-bottom: 18px;">ახალი პარტია მზადდება და მალე დაემატება მარაგში. სცადეთ ფილტრის გასუფთავება ან შეამოწმეთ მოგვიანებით.</p>
+        <p style="color: var(--text-muted); margin-bottom: 18px;">ახალი პარტია მზადდება და მალე დაემატება მარაგში.</p>
         {% if selected_category or selected_dietary or search_query %}
             <a href="{{ url_for('main.home') }}" class="btn btn-outline">ყველა ფილტრის მოხსნა</a>
         {% endif %}
@@ -129,7 +124,7 @@ function copyHomeRefLink(code) {
     const link = window.location.origin + '/register?ref=' + encodeURIComponent(code);
     navigator.clipboard.writeText(link).then(() => {
         if (typeof showToast === 'function') {
-            showToast('მოწვევის ბმული დაკოპირდა (' + code + ')! გაუგზავნეთ მეგობარს.');
+            showToast('მოწვევის ბმული დაკოპირდა (' + code + ')! გაუგზავნეთ მეგობარს (+5.00 ₾).');
         } else {
             alert('მოწვევის ბმული დაკოპირდა: ' + link);
         }

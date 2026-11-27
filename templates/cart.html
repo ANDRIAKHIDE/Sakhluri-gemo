@@ -26,7 +26,19 @@
                         <input type="hidden" name="action" value="decrease">
                         <button type="submit" class="qty-btn">-</button>
                     </form>
-                    <span class="qty-val">{{ item.quantity }}</span>
+
+                    <form method="POST" action="{{ url_for('main.update_cart', product_id=item.product.id) }}" style="margin: 0;">
+                        <input type="hidden" name="action" value="set">
+                        <input type="number"
+                               name="quantity"
+                               value="{{ item.quantity }}"
+                               min="1"
+                               max="{{ item.product.stock_qty }}"
+                               class="qty-input"
+                               onchange="this.form.submit()"
+                               aria-label="რაოდენობა">
+                    </form>
+
                     <form method="POST" action="{{ url_for('main.update_cart', product_id=item.product.id) }}">
                         <input type="hidden" name="action" value="increase">
                         <button type="submit" class="qty-btn">+</button>
@@ -96,4 +108,29 @@
     </div>
 </div>
 {% endif %}
+
+<style>
+.qty-input {
+    width: 48px;
+    height: 32px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border: none;
+    border-left: 1px solid #e5ded5;
+    border-right: 1px solid #e5ded5;
+    background: #fff;
+    color: #1f2937;
+    -moz-appearance: textfield;
+}
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.qty-input:focus {
+    outline: none;
+    background: #fdf8f5;
+}
+</style>
 {% endblock %}

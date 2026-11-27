@@ -13,13 +13,29 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from models import User, Product, Order, ProductLike, Review, Notification
+from flask import Response
 
 from ext import db
 from models import User, Product, Order, ProductLike, Review
 
 main = Blueprint('main', __name__)
 
-CATEGORIES = ['ხინკალი', 'პელმენი და ვარენიკი', 'ხორცეული', 'ბლინები', 'საოჯახო სეტები']
+CATEGORIES = ['კერძები', 'ტკბილეული', 'სასმელები']
+
+def get_default_product_image(title, category):
+    t = (title or '').lower()
+    if 'ხინკალ' in t:
+        return 'default_khinkali.jpg'
+    if 'ბლინ' in t:
+        return 'default_blini.jpg'
+    if 'პილმენ' in t or 'პელმენ' in t or 'ვარენიკ' in t:
+        return 'default_pelmeni.jpg'
+    if category == 'ტკბილეული':
+        return 'default_sweets.jpg'
+    if category == 'სასმელები':
+        return 'default_drinks.jpg'
+    return 'default_khinkali.jpg'
 
 DIETARY_LABELS = {
     'standard': 'კლასიკური',
@@ -121,8 +137,55 @@ def get_cart_details():
 
 @main.app_context_processor
 def inject_globals():
-    _, _, _, _, _, cart_count = get_cart_details()
-    return dict(cart_count=cart_count, categories=CATEGORIES, dietary_labels=DIETARY_LABELS)
+    cart_items, _, _, _, cart_total, cart_count = get_cart_details()
+
+    unread_notifications = []
+    pending_review_order = None
+    pending_review_products = []
+
+    if current_user.is_authenticated:
+        unread_notifications = Notification.query.filter_by(
+            user_id=current_user.id, is_read=False
+        ).order_by(Notification.created_at.desc()).all()
+
+        # ვამოწმებთ, ხომ არ აქვს მომხმარებელს შეკვეთა სტატუსით "delivered", რომელიც ჯერ არ შეუფასებია
+        review_notif = Notification.query.filter_by(
+            user_id=current_user.id, trigger_review=True, is_read=False
+        ).first()
+
+        if review_notif and review_notif.order_id:
+            order = Order.query.get(review_notif.order_id)
+            if order and order.items_json:
+                try:
+                    items_map = json.loads(order.items_json)
+                    for pid_str in items_map.keys():
+                        prod = Product.query.get(int(pid_str))
+                        if prod:
+                            already_reviewed = Review.query.filter_by(
+                                user_id=current_user.id,
+                                product_id=prod.id
+                            ).first()
+                            if not already_reviewed:
+                                pending_review_products.append(prod)
+                    if pending_review_products:
+                        pending_review_order = order
+                    else:
+                        # თუ ყველა პროდუქტი უკვე შეფასებულია, ვხურავთ ტრიგერს
+                        review_notif.trigger_review = False
+                        db.session.commit()
+                except Exception:
+                    pass
+
+    return dict(
+        cart_count=cart_count,
+        mini_cart_items=cart_items,
+        mini_cart_total=cart_total,
+        categories=CATEGORIES,
+        dietary_labels=DIETARY_LABELS,
+        user_notifications=unread_notifications,
+        pending_review_order=pending_review_order,
+        pending_review_products=pending_review_products
+    )
 
 
 # --- 1. მთავარი გვერდი ---
@@ -192,8 +255,14 @@ def product_detail(product_id):
     avg_rating = round(sum(r.rating for r in reviews) / len(reviews), 1) if reviews else 5.0
 
     is_liked = False
+    can_review = False
     if current_user.is_authenticated:
         is_liked = ProductLike.query.filter_by(user_id=current_user.id, product_id=product.id).first() is not None
+        has_order = Order.query.filter(
+            Order.buyer_id == current_user.id,
+            Order.status != 'cancelled'
+        ).count() > 0
+        can_review = has_order or current_user.is_admin
 
     related = Product.query.filter(
         Product.category == product.category,
@@ -201,12 +270,14 @@ def product_detail(product_id):
         Product.in_stock == True,
         Product.stock_qty > 0
     ).limit(3).all()
+
     return render_template(
         'product_detail.html',
         product=product,
         reviews=reviews,
         avg_rating=avg_rating,
         is_liked=is_liked,
+        can_review=can_review,
         related=related
     )
 
@@ -215,6 +286,16 @@ def product_detail(product_id):
 @login_required
 def add_review(product_id):
     product = Product.query.get_or_404(product_id)
+
+    has_order = Order.query.filter(
+        Order.buyer_id == current_user.id,
+        Order.status != 'cancelled'
+    ).count() > 0
+
+    if not has_order and not current_user.is_admin:
+        flash('შეფასების დაწერა შეუძლიათ მხოლოდ იმ მომხმარებლებს, ვისაც ერთი შეკვეთა მაინც აქვთ გაფორმებული.', 'warning')
+        return redirect(url_for('main.product_detail', product_id=product.id))
+
     rating = int(request.form.get('rating', 5))
     comment = request.form.get('comment', '').strip()
 
@@ -284,11 +365,21 @@ def add_to_cart(product_id):
     session.modified = True
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        _, _, _, _, _, total_count = get_cart_details()
+        cart_items, _, _, _, cart_total, total_count = get_cart_details()
+        mini_items = [
+            {
+                'title': item['product'].title,
+                'qty': item['quantity'],
+                'line_total': f"{item['line_total']:.2f}"
+            }
+            for item in cart_items
+        ]
         return jsonify({
             'success': True,
             'cart_count': total_count,
-            'message': f'„{product.title}“ დაემატა კალათაში (მარაგშია {avail} {product.unit})'
+            'cart_total': f"{cart_total:.2f}",
+            'mini_items': mini_items,
+            'message': f'✓ „{product.title}“ დაემატა კალათაში'
         })
 
     flash(f'„{product.title}“ ({qty} {product.unit}) დაემატა კალათაში!', 'success')
@@ -297,27 +388,32 @@ def add_to_cart(product_id):
 
 @main.route('/cart/update/<int:product_id>', methods=['POST'])
 def update_cart(product_id):
+    cart = session.get('cart', {})
+    pid = str(product_id)
     action = request.form.get('action')
-    cart_dict = session.get('cart', {})
-    pid_str = str(product_id)
-    product = Product.query.get(product_id)
+    product = Product.query.get_or_404(product_id)
 
-    if pid_str in cart_dict:
-        if action == 'increase':
-            max_allowed = (product.stock_qty or 0) if product else 0
-            if cart_dict[pid_str] < max_allowed:
-                cart_dict[pid_str] += 1
-        elif action == 'decrease':
-            cart_dict[pid_str] -= 1
-            if cart_dict[pid_str] <= 0:
-                del cart_dict[pid_str]
-        elif action == 'remove':
-            del cart_dict[pid_str]
+    if action == 'increase':
+        if cart.get(pid, 0) < product.stock_qty:
+            cart[pid] = cart.get(pid, 0) + 1
+    elif action == 'decrease':
+        if cart.get(pid, 0) > 1:
+            cart[pid] -= 1
+        else:
+            cart.pop(pid, None)
+    elif action == 'set':
+        try:
+            qty = int(request.form.get('quantity', 1))
+        except ValueError:
+            qty = 1
+        if qty <= 0:
+            cart.pop(pid, None)
+        else:
+            cart[pid] = min(qty, product.stock_qty)
+    elif action == 'remove':
+        cart.pop(pid, None)
 
-    if len(cart_dict) < 3:
-        session['is_box_combo'] = False
-
-    session['cart'] = cart_dict
+    session['cart'] = cart
     session.modified = True
     return redirect(url_for('main.cart'))
 
@@ -621,11 +717,14 @@ def profile():
         db.session.commit()
 
     my_orders = Order.query.filter_by(buyer_id=current_user.id).order_by(Order.created_at.desc()).all()
+    orders_count = sum(1 for o in my_orders if o.status != 'cancelled')
     liked_products = [like.product for like in ProductLike.query.filter_by(user_id=current_user.id).all()]
     invited_count = Order.query.filter_by(referral_code_used=current_user.referral_code, referral_rewarded=True).count()
+
     return render_template(
         'profile.html',
         orders=my_orders,
+        orders_count=orders_count,
         liked_products=liked_products,
         invited_count=invited_count
     )
@@ -898,6 +997,17 @@ def admin_print_order(order_id):
     order = Order.query.get_or_404(order_id)
     return render_template('print_receipt.html', order=order)
 
+@main.route('/admin/product/<int:product_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    ProductLike.query.filter_by(product_id=product.id).delete()
+    Review.query.filter_by(product_id=product.id).delete()
+    db.session.delete(product)
+    db.session.commit()
+    flash(f'პროდუქტი „{product.title}“ წაიშალა.', 'info')
+    return redirect(url_for('main.admin_panel'))
 
 @main.route('/admin/export-orders')
 @login_required
@@ -1061,15 +1171,6 @@ def admin_edit_product(product_id):
     return render_template('admin_product_form.html', product=product)
 
 
-@main.route('/admin/product/delete/<int:product_id>', methods=['POST'])
-@login_required
-@admin_required
-def admin_delete_product(product_id):
-    product = Product.query.get_or_404(product_id)
-    db.session.delete(product)
-    db.session.commit()
-    flash('პროდუქტი წაიშალა.', 'info')
-    return redirect(url_for('main.admin_panel'))
 
 
 @main.route('/admin/order/<int:order_id>/status', methods=['POST'])
@@ -1189,3 +1290,33 @@ def terms():
 @main.route('/privacy')
 def privacy():
     return render_template('legal.html', page_type='privacy')
+
+@main.route('/robots.txt')
+def robots_txt():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin",
+        "Disallow: /cart",
+        f"Sitemap: {request.url_root.rstrip('/')}/sitemap.xml"
+    ]
+    return Response("\n".join(lines), mimetype="text/plain")
+
+@main.route('/sitemap.xml')
+def sitemap_xml():
+    base = request.url_root.rstrip('/')
+    urls = [
+        f"{base}/",
+        f"{base}/wholesale",
+        f"{base}/terms",
+        f"{base}/privacy"
+    ]
+    for p in Product.query.all():
+        urls.append(f"{base}/product/{p.id}")
+
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for u in urls:
+        xml.append(f"  <url><loc>{u}</loc><changefreq>weekly</changefreq></url>")
+    xml.append('</urlset>')
+    return Response("\n".join(xml), mimetype="application/xml")

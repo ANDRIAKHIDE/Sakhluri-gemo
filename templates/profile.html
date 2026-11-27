@@ -25,7 +25,13 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <!-- გაფორმებული შეკვეთების მთვლელი -->
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: var(--bg-main); border: 1px solid var(--border-color); padding: 7px 14px; border-radius: 10px; font-size: 0.88rem;">
+                <span style="color: var(--text-muted);">შეკვეთები:</span>
+                <strong style="font-size: 1.05rem; color: var(--primary);">{{ orders_count if orders_count is defined else (orders|rejectattr('status', 'equalto', 'cancelled')|list|length) }}</strong>
+            </div>
+
             {% if current_user.is_admin %}
                 <a href="{{ url_for('main.admin_panel') }}" class="btn btn-outline btn-sm">ადმინ-პანელი</a>
             {% endif %}
@@ -115,10 +121,12 @@
                         </td>
                         <td style="white-space: nowrap;"><strong>{{ "%.2f"|format(o.total_price) }} ₾</strong></td>
                         <td>
-                            {% if o.status == 'pending' %}<span class="status-pill status-pending">ახალი</span>
+                            {% if o.status == 'pending' %}<span class="status-pill status-pending">ლოდინის რეჟიმში</span>
+                            {% elif o.status == 'confirmed' %}<span class="status-pill" style="background: #DBEAFE; color: #1E40AF;">✓ დადასტურებულია</span>
                             {% elif o.status == 'preparing' %}<span class="status-pill status-preparing">მზადდება</span>
+                            {% elif o.status == 'on_the_way' %}<span class="status-pill" style="background: #FEF3C7; color: #B45309;">კურიერს მოაქვს</span>
                             {% elif o.status == 'delivered' %}<span class="status-pill status-delivered">მიტანილია</span>
-                            {% else %}<span class="status-pill status-cancelled">გაუქმებული</span>{% endif %}
+                            {% else %}<span class="status-pill status-cancelled">✕ გაუქმებულია</span>{% endif %}
                         </td>
                         <td>
                             <form method="POST" action="{{ url_for('main.reorder', order_id=o.id) }}">
